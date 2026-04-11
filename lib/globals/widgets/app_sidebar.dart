@@ -83,6 +83,8 @@ class AppSidebar extends StatelessWidget {
       label: 'Layanan',
       route: '/layanan',
     ),
+
+    _NavItemData(icon: Icons.countertops, label: 'Loket', route: '/loket'),
     _NavItemData(
       icon: Icons.confirmation_number_rounded,
       label: 'Antrian',

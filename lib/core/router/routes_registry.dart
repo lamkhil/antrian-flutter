@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 /// mason:imports
+import '../../features/loket/loket_route.dart';
 import '../../features/pengaturan/pengaturan_route.dart';
 import '../../features/laporan/laporan_route.dart';
 import '../../features/pengguna/pengguna_route.dart';
@@ -12,6 +13,7 @@ import '../../features/login/login_route.dart';
 
 final List<GoRoute> appRoutes = [
   /// mason:routes
+  loketRoute,
   pengaturanRoute,
   laporanRoute,
   penggunaRoute,
