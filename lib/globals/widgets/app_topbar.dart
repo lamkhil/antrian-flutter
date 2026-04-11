@@ -1,4 +1,5 @@
 import 'package:antrian/data/models/lokasi.dart';
+import 'package:antrian/data/models/notifikasi.dart';
 import 'package:antrian/extension/size.dart';
 import 'package:antrian/globals/providers/lokasi/lokasi_provider.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class AppTopBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lokasiAktif = ref.watch(lokasiProviderProvider);
+    final lokasiAktif = ref.watch(lokasiControllerProvider).aktif;
 
     return Column(
       children: [
@@ -48,26 +49,11 @@ class AppTopBar extends ConsumerWidget implements PreferredSizeWidget {
               const Spacer(),
 
               // Actions kanan
-              _IconBtn(
-                icon: Icons.notifications_outlined,
-                onTap: () {},
-                badge: true,
-              ),
+              const _NotifikasiButton(),
               const SizedBox(width: 6),
               _IconBtn(icon: Icons.settings_outlined, onTap: () {}),
               const SizedBox(width: 8),
-              const CircleAvatar(
-                radius: 16,
-                backgroundColor: Color(0xFFEEF2FF),
-                child: Text(
-                  'AD',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF4338CA),
-                  ),
-                ),
-              ),
+              const _ProfileButton(),
             ],
           ),
         ),
@@ -194,7 +180,7 @@ class _LokasiDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final aktif = ref.watch(lokasiProviderProvider);
+    final aktif = ref.watch(lokasiControllerProvider).aktif;
 
     // Posisikan di bawah topbar
     return Stack(
@@ -246,14 +232,16 @@ class _LokasiDropdown extends StatelessWidget {
                       ),
                     ),
                     // Items
-                    ...daftarLokasi.map((lokasi) {
+                    ...(ref.watch(lokasiControllerProvider).daftarLokasi).map((
+                      lokasi,
+                    ) {
                       final isActive = lokasi.id == aktif?.id;
                       return _LokasiItem(
                         lokasi: lokasi,
                         isActive: isActive,
                         onTap: () {
                           ref
-                              .read(lokasiProviderProvider.notifier)
+                              .read(lokasiControllerProvider.notifier)
                               .setLokasi(lokasi);
                           Navigator.pop(context);
                         },
@@ -290,27 +278,14 @@ class _LokasiItemState extends State<_LokasiItem> {
 
   // Warna ikon per lokasi
   static const _iconColors = [
-    (Color(0xFFEEF2FF), Color(0xFF6366F1)), // MPP Pusat — indigo
-    (Color(0xFFE1F5EE), Color(0xFF1D9E75)), // SPP Menur — teal
-    (Color(0xFFFAEEDA), Color(0xFFBA7517)), // SPP Joyoboyo — amber
+    (Color(0xFFEEF2FF), Color(0xFF6366F1)),
+    (Color(0xFFE1F5EE), Color(0xFF1D9E75)),
+    (Color(0xFFFAEEDA), Color(0xFFBA7517)),
     (Color(0xFFFAECE7), Color(0xFFD85A30)), // SPP Siwalankerto — coral
-  ];
-
-  static const _icons = [
-    Icons.account_balance_rounded,
-    Icons.business_rounded,
-    Icons.store_rounded,
-    Icons.location_city_rounded,
   ];
 
   @override
   Widget build(BuildContext context) {
-    final idx = daftarLokasi
-        .indexWhere((l) => l.id == widget.lokasi.id)
-        .clamp(0, 3);
-    final (iconBg, iconColor) = _iconColors[idx];
-    final icon = _icons[idx];
-
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
@@ -331,18 +306,6 @@ class _LokasiItemState extends State<_LokasiItem> {
           ),
           child: Row(
             children: [
-              // Icon
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, size: 16, color: iconColor),
-              ),
-              const SizedBox(width: 10),
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,7 +322,7 @@ class _LokasiItemState extends State<_LokasiItem> {
                     ),
                     const SizedBox(height: 1),
                     Text(
-                      '${widget.lokasi.alamat} · ${widget.lokasi.zonaAktif} zona aktif',
+                      widget.lokasi.alamat,
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF9CA3AF),
@@ -427,6 +390,445 @@ class _IconBtn extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileButton extends StatelessWidget {
+  const _ProfileButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showProfileSheet(context),
+      child: const CircleAvatar(
+        radius: 16,
+        backgroundColor: Color(0xFFEEF2FF),
+        child: Text(
+          'AD',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF4338CA),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showProfileSheet(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.1),
+      builder: (_) => const _ProfileDropdown(),
+    );
+  }
+}
+
+class _ProfileDropdown extends StatelessWidget {
+  const _ProfileDropdown();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned(
+          top: 60,
+          right: 20,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: 260,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Info user
+                    Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 22,
+                            backgroundColor: Color(0xFFEEF2FF),
+                            child: Text(
+                              'AD',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF4338CA),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Admin Dinas',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'admin@surabaya.go.id',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF9CA3AF),
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'Super Admin',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF4338CA),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+                    _ProfileMenuItem(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Profil saya',
+                      onTap: () {},
+                    ),
+                    const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+                    _ProfileMenuItem(
+                      icon: Icons.logout_rounded,
+                      label: 'Keluar',
+                      isDestructive: true,
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileMenuItem extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final bool isDestructive;
+  final VoidCallback onTap;
+
+  const _ProfileMenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.isDestructive = false,
+  });
+
+  @override
+  State<_ProfileMenuItem> createState() => _ProfileMenuItemState();
+}
+
+class _ProfileMenuItemState extends State<_ProfileMenuItem> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.isDestructive
+        ? const Color(0xFFEF4444)
+        : const Color(0xFF374151);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: _hovered ? const Color(0xFFF9FAFB) : Colors.white,
+            border: const Border(
+              bottom: BorderSide(color: Color(0xFFF3F4F6), width: 0.5),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(widget.icon, size: 15, color: color),
+              const SizedBox(width: 10),
+              Text(widget.label, style: TextStyle(fontSize: 13, color: color)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Widget _NotifikasiButton — ganti _IconBtn notifikasi di AppTopBar
+
+class _NotifikasiButton extends StatelessWidget {
+  const _NotifikasiButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final belumDibaca = daftarNotifikasi.any((n) => !n.sudahDibaca);
+
+    return GestureDetector(
+      onTap: () => _showNotifikasiSheet(context),
+      child: _IconBtn(
+        icon: Icons.notifications_outlined,
+        onTap: () => _showNotifikasiSheet(context),
+        badge: belumDibaca,
+      ),
+    );
+  }
+
+  void _showNotifikasiSheet(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.1),
+      builder: (_) => const _NotifikasiDropdown(),
+    );
+  }
+}
+
+class _NotifikasiDropdown extends StatelessWidget {
+  const _NotifikasiDropdown();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned(
+          top: 60,
+          right: 20,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: 300,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Color(0xFFF3F4F6),
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'NOTIFIKASI',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF9CA3AF),
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {}, // TODO: tandai semua dibaca
+                            child: const Text(
+                              'Tandai semua dibaca',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF6366F1),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // List
+                    ...daftarNotifikasi.map(
+                      (n) => _NotifikasiItem(notifikasi: n),
+                    ),
+                    // Footer
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: navigasi ke halaman notifikasi
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              color: Color(0xFFF3F4F6),
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: const Text(
+                          'Lihat semua notifikasi',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6366F1),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NotifikasiItem extends StatelessWidget {
+  final Notifikasi notifikasi;
+
+  const _NotifikasiItem({required this.notifikasi});
+
+  static const _config = {
+    TipeNotifikasi.info: (
+      Color(0xFFEEF2FF),
+      Color(0xFF6366F1),
+      Icons.group_outlined,
+    ),
+    TipeNotifikasi.warning: (
+      Color(0xFFFEF3C7),
+      Color(0xFFD97706),
+      Icons.warning_amber_rounded,
+    ),
+    TipeNotifikasi.success: (
+      Color(0xFFECFDF5),
+      Color(0xFF059669),
+      Icons.check_rounded,
+    ),
+    TipeNotifikasi.danger: (
+      Color(0xFFFEE2E2),
+      Color(0xFFEF4444),
+      Icons.close_rounded,
+    ),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final (iconBg, iconColor, icon) = _config[notifikasi.tipe]!;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: notifikasi.sudahDibaca ? Colors.white : const Color(0xFFF5F3FF),
+        border: const Border(
+          bottom: BorderSide(color: Color(0xFFF3F4F6), width: 0.5),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 15, color: iconColor),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notifikasi.judul,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  notifikasi.deskripsi,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  notifikasi.waktu,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFFD1D5DB),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (!notifikasi.sudahDibaca)
+            Container(
+              width: 6,
+              height: 6,
+              margin: const EdgeInsets.only(top: 4),
+              decoration: const BoxDecoration(
+                color: Color(0xFF6366F1),
+                shape: BoxShape.circle,
+              ),
+            ),
+        ],
       ),
     );
   }

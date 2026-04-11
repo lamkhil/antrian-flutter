@@ -42,18 +42,36 @@ class _AppLayoutState extends State<AppLayout> {
       body: Row(
         children: [
           if (isDesktop)
-            AppSidebar(collapsed: false)
+            Hero(
+              tag: 'app-sidebar',
+              child: Material(
+                color: Colors.transparent,
+                child: AppSidebar(collapsed: false),
+              ),
+            )
           else if (isTablet)
-            AppSidebar(collapsed: true), // mini sidebar ikonnya saja
+            Hero(
+              tag: 'app-sidebar',
+              child: Material(
+                color: Colors.transparent,
+                child: AppSidebar(collapsed: true),
+              ),
+            ), // mini sidebar ikonnya saja
           Expanded(
             child: Column(
               children: [
-                AppTopBar(
-                  title: widget.title,
-                  breadcrumbs: widget.breadcrumbs,
-                  onMenuTap: isDesktop
-                      ? null
-                      : () => _scaffoldKey.currentState?.openDrawer(),
+                Hero(
+                  tag: 'app-topbar',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: AppTopBar(
+                      title: widget.title,
+                      breadcrumbs: widget.breadcrumbs,
+                      onMenuTap: isDesktop
+                          ? null
+                          : () => _scaffoldKey.currentState?.openDrawer(),
+                    ),
+                  ),
                 ),
                 Expanded(child: widget.child),
               ],

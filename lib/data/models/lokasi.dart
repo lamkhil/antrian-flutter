@@ -1,41 +1,20 @@
-class Lokasi {
+import 'package:equatable/equatable.dart';
+
+class Lokasi extends Equatable {
   final String id;
   final String nama;
   final String alamat;
-  final int zonaAktif;
 
-  const Lokasi({
-    required this.id,
-    required this.nama,
-    required this.alamat,
-    required this.zonaAktif,
-  });
+  const Lokasi({required this.id, required this.nama, required this.alamat});
+
+  Lokasi copyWith({String? nama, String? alamat}) =>
+      Lokasi(id: id, nama: nama ?? this.nama, alamat: alamat ?? this.alamat);
+
+  factory Lokasi.fromJson(Map<String, dynamic> json) =>
+      Lokasi(id: json['id'], nama: json['nama'], alamat: json['alamat']);
+
+  Map<String, dynamic> toJson() => {'id': id, 'nama': nama, 'alamat': alamat};
+
+  @override
+  List<Object?> get props => [id];
 }
-
-// Master list — ganti/tambah sesuai data dari API
-const daftarLokasi = [
-  Lokasi(
-    id: 'mpp-pusat',
-    nama: 'MPP Pusat',
-    alamat: 'Jl. Jimerto No.25',
-    zonaAktif: 3,
-  ),
-  Lokasi(
-    id: 'spp-menur',
-    nama: 'SPP Menur',
-    alamat: 'Jl. Menur No.31',
-    zonaAktif: 2,
-  ),
-  Lokasi(
-    id: 'spp-joyoboyo',
-    nama: 'SPP Joyoboyo',
-    alamat: 'Jl. Joyoboyo No.10',
-    zonaAktif: 1,
-  ),
-  Lokasi(
-    id: 'spp-siwalankerto',
-    nama: 'SPP Siwalankerto',
-    alamat: 'Jl. Siwalankerto No.5',
-    zonaAktif: 2,
-  ),
-];

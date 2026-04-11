@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:antrian/globals/app_navigator.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -251,11 +254,19 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentRoute = GoRouterState.of(context).matchedLocation;
-    final isActive = currentRoute.startsWith(route);
+    String currentRoute = '.';
+    try {
+      currentRoute = GoRouterState.of(context).matchedLocation;
+    } catch (e) {
+      log('Transition triggerd');
+    }
+    bool isActive = currentRoute.startsWith(route);
+    if (route == '/' && currentRoute != '/') {
+      isActive = false;
+    }
 
     final item = InkWell(
-      onTap: () => context.go(route),
+      onTap: () => context.replace(route),
       borderRadius: BorderRadius.circular(8),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),

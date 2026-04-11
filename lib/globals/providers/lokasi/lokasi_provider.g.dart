@@ -9,51 +9,51 @@ part of 'lokasi_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(LokasiProvider)
-final lokasiProviderProvider = LokasiProviderProvider._();
+@ProviderFor(LokasiController)
+final lokasiControllerProvider = LokasiControllerProvider._();
 
-final class LokasiProviderProvider
-    extends $NotifierProvider<LokasiProvider, Lokasi?> {
-  LokasiProviderProvider._()
+final class LokasiControllerProvider
+    extends $NotifierProvider<LokasiController, LokasiState> {
+  LokasiControllerProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'lokasiProviderProvider',
-        isAutoDispose: true,
+        name: r'lokasiControllerProvider',
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$lokasiProviderHash();
+  String debugGetCreateSourceHash() => _$lokasiControllerHash();
 
   @$internal
   @override
-  LokasiProvider create() => LokasiProvider();
+  LokasiController create() => LokasiController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Lokasi? value) {
+  Override overrideWithValue(LokasiState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Lokasi?>(value),
+      providerOverride: $SyncValueProvider<LokasiState>(value),
     );
   }
 }
 
-String _$lokasiProviderHash() => r'67fa1745a181f7cc5f30d979e8750f3b68518c1c';
+String _$lokasiControllerHash() => r'c44fe19f64f3c8d6c9163d7bd96159ef38cc021e';
 
-abstract class _$LokasiProvider extends $Notifier<Lokasi?> {
-  Lokasi? build();
+abstract class _$LokasiController extends $Notifier<LokasiState> {
+  LokasiState build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<Lokasi?, Lokasi?>;
+    final ref = this.ref as $Ref<LokasiState, LokasiState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<Lokasi?, Lokasi?>,
-              Lokasi?,
+              AnyNotifier<LokasiState, LokasiState>,
+              LokasiState,
               Object?,
               Object?
             >;
