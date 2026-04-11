@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1091908852133",
+    "project_id": "serverless-queue",
+    "storage_bucket": "serverless-queue.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1091908852133:android:0e31a6c7dffb076e12f04c",
+        "android_client_info": {
+          "package_name": "com.dna.antrian"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCe8qGqlNXSMGmBvbWe1nOMA7RdaYIoYY0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
