@@ -43,7 +43,7 @@ class LayananController extends _$LayananController {
     return const LayananState();
   }
 
-  void load() async {
+  Future<void> load() async {
     final lokasi = ref.read(lokasiControllerProvider).aktif;
     state = state.copyWith(status: LayananStatus.loading);
     final result = await ZonaServices.fetchLayananByLokasi(lokasi);

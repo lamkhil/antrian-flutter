@@ -87,7 +87,6 @@ class AppSidebar extends StatelessWidget {
       icon: Icons.confirmation_number_rounded,
       label: 'Antrian',
       route: '/antrian',
-      badge: '12',
     ),
   ];
 

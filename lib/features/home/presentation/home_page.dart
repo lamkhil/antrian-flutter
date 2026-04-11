@@ -23,56 +23,57 @@ class HomePage extends ConsumerWidget {
     return AppLayout(
       title: 'Dashboard',
       breadcrumbs: const ['Home', 'Dashboard'],
-      child: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () =>
-                  ref.read(homeControllerProvider.notifier).refresh(),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(isDesktop ? 24 : 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Stat cards ───────────────────────
-                    _StatGrid(stats: state.stats, isDesktop: isDesktop),
-                    const SizedBox(height: 16),
+      child: const Center(child: CircularProgressIndicator()),
+      // child: state.isLoading
+      //     ? const Center(child: CircularProgressIndicator())
+      //     : RefreshIndicator(
+      //         onRefresh: () =>
+      //             ref.read(homeControllerProvider.notifier).refresh(),
+      //         child: SingleChildScrollView(
+      //           physics: const AlwaysScrollableScrollPhysics(),
+      //           padding: EdgeInsets.all(isDesktop ? 24 : 16),
+      //           child: Column(
+      //             crossAxisAlignment: CrossAxisAlignment.start,
+      //             children: [
+      //               // ── Stat cards ───────────────────────
+      //               _StatGrid(stats: state.stats, isDesktop: isDesktop),
+      //               const SizedBox(height: 16),
 
-                    // ── Antrian + Zona + Waktu ───────────
-                    isDesktop
-                        ? _DesktopRow(state: state)
-                        : _MobileColumn(state: state),
-                    const SizedBox(height: 16),
+      //               // ── Antrian + Zona + Waktu ───────────
+      //               isDesktop
+      //                   ? _DesktopRow(state: state)
+      //                   : _MobileColumn(state: state),
+      //               const SizedBox(height: 16),
 
-                    // ── Riwayat + Ringkasan ──────────────
-                    isDesktop || isTablet
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: RiwayatCard(items: state.riwayat),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: RingkasanLayananCard(
-                                  items: state.ringkasanLayanan,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              RiwayatCard(items: state.riwayat),
-                              const SizedBox(height: 16),
-                              RingkasanLayananCard(
-                                items: state.ringkasanLayanan,
-                              ),
-                            ],
-                          ),
-                  ],
-                ),
-              ),
-            ),
+      //               // ── Riwayat + Ringkasan ──────────────
+      //               isDesktop || isTablet
+      //                   ? Row(
+      //                       crossAxisAlignment: CrossAxisAlignment.start,
+      //                       children: [
+      //                         Expanded(
+      //                           child: RiwayatCard(items: state.riwayat),
+      //                         ),
+      //                         const SizedBox(width: 16),
+      //                         Expanded(
+      //                           child: RingkasanLayananCard(
+      //                             items: state.ringkasanLayanan,
+      //                           ),
+      //                         ),
+      //                       ],
+      //                     )
+      //                   : Column(
+      //                       children: [
+      //                         RiwayatCard(items: state.riwayat),
+      //                         const SizedBox(height: 16),
+      //                         RingkasanLayananCard(
+      //                           items: state.ringkasanLayanan,
+      //                         ),
+      //                       ],
+      //                     ),
+      //             ],
+      //           ),
+      //         ),
+      //       ),
     );
   }
 }

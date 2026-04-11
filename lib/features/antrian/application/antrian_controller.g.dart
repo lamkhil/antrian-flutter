@@ -13,7 +13,7 @@ part of 'antrian_controller.dart';
 final antrianControllerProvider = AntrianControllerProvider._();
 
 final class AntrianControllerProvider
-    extends $NotifierProvider<AntrianController, int> {
+    extends $NotifierProvider<AntrianController, AntrianState> {
   AntrianControllerProvider._()
     : super(
         from: null,
@@ -33,27 +33,27 @@ final class AntrianControllerProvider
   AntrianController create() => AntrianController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
+  Override overrideWithValue(AntrianState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
+      providerOverride: $SyncValueProvider<AntrianState>(value),
     );
   }
 }
 
-String _$antrianControllerHash() => r'2dc3efb5ee689e2e96176df034530f289a041c9c';
+String _$antrianControllerHash() => r'e0dcd35b480b505adbeb2f792c6cb7925ec09fb0';
 
-abstract class _$AntrianController extends $Notifier<int> {
-  int build();
+abstract class _$AntrianController extends $Notifier<AntrianState> {
+  AntrianState build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<int, int>;
+    final ref = this.ref as $Ref<AntrianState, AntrianState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<int, int>,
-              int,
+              AnyNotifier<AntrianState, AntrianState>,
+              AntrianState,
               Object?,
               Object?
             >;
