@@ -1,9 +1,9 @@
+import 'package:antrian/data/models/antrian.dart';
 import 'package:antrian/features/home/presentation/widgets/_dash_card.dart';
 import 'package:flutter/material.dart';
-import '../../application/home_state.dart';
 
 class AntrianAktifCard extends StatelessWidget {
-  final List<AntrianItem> items;
+  final List<Antrian> items;
 
   const AntrianAktifCard({super.key, required this.items});
 
@@ -24,12 +24,14 @@ class AntrianAktifCard extends StatelessWidget {
 }
 
 class _AntrianRow extends StatelessWidget {
-  final AntrianItem item;
+  final Antrian item;
 
   const _AntrianRow({required this.item});
 
   @override
   Widget build(BuildContext context) {
+    final loketLabel = item.loket?.nama ??
+        (item.status == StatusAntrian.menunggu ? 'Menunggu' : '-');
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: const BoxDecoration(
@@ -42,7 +44,7 @@ class _AntrianRow extends StatelessWidget {
           SizedBox(
             width: 48,
             child: Text(
-              item.nomor,
+              item.nomorAntrian,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -63,7 +65,7 @@ class _AntrianRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${item.layanan} · ${item.loket == '-' ? 'Menunggu' : item.loket}',
+                  '${item.layanan.nama} · $loketLabel',
                   style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF9CA3AF),
@@ -80,29 +82,34 @@ class _AntrianRow extends StatelessWidget {
 }
 
 class StatusBadge extends StatelessWidget {
-  final AntrianStatus status;
+  final StatusAntrian status;
 
   const StatusBadge(this.status, {super.key});
 
   @override
   Widget build(BuildContext context) {
     final (label, bg, fg) = switch (status) {
-      AntrianStatus.dipanggil => (
+      StatusAntrian.dipanggil => (
         'Dipanggil',
         const Color(0xFFEEF2FF),
         const Color(0xFF3C3489),
       ),
-      AntrianStatus.menunggu => (
+      StatusAntrian.menunggu => (
         'Menunggu',
         const Color(0xFFFAEEDA),
         const Color(0xFF633806),
       ),
-      AntrianStatus.selesai => (
+      StatusAntrian.dilayani => (
+        'Dilayani',
+        const Color(0xFFE1F5EE),
+        const Color(0xFF065F46),
+      ),
+      StatusAntrian.selesai => (
         'Selesai',
         const Color(0xFFEAF3DE),
         const Color(0xFF27500A),
       ),
-      AntrianStatus.dibatalkan => (
+      StatusAntrian.dilewati => (
         'Batal',
         const Color(0xFFFCEBEB),
         const Color(0xFF791F1F),

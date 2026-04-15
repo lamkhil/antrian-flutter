@@ -13,7 +13,7 @@ part of 'loket_controller.dart';
 final loketControllerProvider = LoketControllerProvider._();
 
 final class LoketControllerProvider
-    extends $NotifierProvider<LoketController, int> {
+    extends $NotifierProvider<LoketController, LoketState> {
   LoketControllerProvider._()
     : super(
         from: null,
@@ -33,27 +33,27 @@ final class LoketControllerProvider
   LoketController create() => LoketController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
+  Override overrideWithValue(LoketState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
+      providerOverride: $SyncValueProvider<LoketState>(value),
     );
   }
 }
 
-String _$loketControllerHash() => r'7464f6fd9248ca1ed460b398cc4b15b0d028aa56';
+String _$loketControllerHash() => r'b8aac980cde2c518ef69615b5d98b26252ead5ad';
 
-abstract class _$LoketController extends $Notifier<int> {
-  int build();
+abstract class _$LoketController extends $Notifier<LoketState> {
+  LoketState build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<int, int>;
+    final ref = this.ref as $Ref<LoketState, LoketState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<int, int>,
-              int,
+              AnyNotifier<LoketState, LoketState>,
+              LoketState,
               Object?,
               Object?
             >;

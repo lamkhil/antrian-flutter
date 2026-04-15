@@ -10,6 +10,8 @@ import '../../features/layanan/layanan_route.dart';
 import '../../features/zona/zona_route.dart';
 import '../../features/home/home_route.dart';
 import '../../features/login/login_route.dart';
+import '../../features/kiosk/kiosk_route.dart';
+import '../../features/display/display_route.dart';
 
 final List<GoRoute> appRoutes = [
   /// mason:routes
@@ -19,8 +21,11 @@ final List<GoRoute> appRoutes = [
   penggunaRoute,
   antrianRoute,
   layananRoute,
+  layananDetailRoute,
   zonaRoute,
   zonaDetailRoute,
   homeRoute,
   loginRoute,
+  kioskRoute,
+  displayRoute,
 ];

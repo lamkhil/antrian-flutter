@@ -13,7 +13,7 @@ part of 'laporan_controller.dart';
 final laporanControllerProvider = LaporanControllerProvider._();
 
 final class LaporanControllerProvider
-    extends $NotifierProvider<LaporanController, int> {
+    extends $NotifierProvider<LaporanController, LaporanState> {
   LaporanControllerProvider._()
     : super(
         from: null,
@@ -33,27 +33,27 @@ final class LaporanControllerProvider
   LaporanController create() => LaporanController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
+  Override overrideWithValue(LaporanState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
+      providerOverride: $SyncValueProvider<LaporanState>(value),
     );
   }
 }
 
-String _$laporanControllerHash() => r'ddaf598e921400ec0f69d9d9b39001e4bb357a43';
+String _$laporanControllerHash() => r'567a22947c2465e958926a7b7e7be90608557bcb';
 
-abstract class _$LaporanController extends $Notifier<int> {
-  int build();
+abstract class _$LaporanController extends $Notifier<LaporanState> {
+  LaporanState build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<int, int>;
+    final ref = this.ref as $Ref<LaporanState, LaporanState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<int, int>,
-              int,
+              AnyNotifier<LaporanState, LaporanState>,
+              LaporanState,
               Object?,
               Object?
             >;

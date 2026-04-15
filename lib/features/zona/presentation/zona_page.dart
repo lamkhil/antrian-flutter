@@ -8,7 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/zona.dart';
+import '../../../globals/widgets/app_action_button.dart';
+import '../../../globals/widgets/app_dropdown_field.dart';
+import '../../../globals/widgets/app_empty_state.dart';
+import '../../../globals/widgets/app_form_field.dart';
 import '../../../globals/widgets/app_layout.dart';
+import '../../../globals/widgets/app_list_toolbar.dart';
+import '../../../globals/widgets/app_mobile_field.dart';
+import '../../../globals/widgets/status_badge.dart';
 
 class ZonaPage extends ConsumerStatefulWidget {
   const ZonaPage({super.key});
@@ -57,9 +64,11 @@ class _ZonaPageState extends ConsumerState<ZonaPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Toolbar(
+              AppListToolbar(
+                searchHint: 'Cari zona...',
+                addLabel: 'Tambah Zona',
                 onSearch: (v) => setState(() => _query = v),
-                onTambah: () => _showFormDialog(context, null),
+                onAdd: () => _showFormDialog(context, null),
               ),
               const SizedBox(height: 16),
               LayoutBuilder(
@@ -100,85 +109,6 @@ class _ZonaPageState extends ConsumerState<ZonaPage> {
   }
 }
 
-// ── Toolbar ───────────────────────────────────────────────
-
-class _Toolbar extends StatelessWidget {
-  final ValueChanged<String> onSearch;
-  final VoidCallback onTambah;
-
-  const _Toolbar({required this.onSearch, required this.onTambah});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: SizedBox(
-            height: 36,
-            child: TextField(
-              onChanged: onSearch,
-              style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Cari zona...',
-                hintStyle: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF9CA3AF),
-                ),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  size: 16,
-                  color: Color(0xFF9CA3AF),
-                ),
-                contentPadding: EdgeInsets.zero,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFE5E7EB),
-                    width: 0.5,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFE5E7EB),
-                    width: 0.5,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF6366F1),
-                    width: 1,
-                  ),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        SizedBox(
-          height: 36,
-          child: ElevatedButton.icon(
-            onPressed: onTambah,
-            icon: const Icon(Icons.add_rounded, size: 16),
-            label: const Text('Tambah Zona', style: TextStyle(fontSize: 13)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // ── Tabel (desktop) ───────────────────────────────────────
 
 class _ZonaTable extends StatelessWidget {
@@ -204,7 +134,7 @@ class _ZonaTable extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: items.isEmpty
-            ? const _EmptyState()
+            ? const AppEmptyState(message: 'Tidak ada zona ditemukan')
             : DataTable(
                 headingRowColor: WidgetStateProperty.all(
                   const Color(0xFFF9FAFB),
@@ -236,18 +166,18 @@ class _ZonaTable extends StatelessWidget {
                           DataCell(
                             Row(
                               children: [
-                                _ActionBtn(
+                                AppActionButton(
                                   icon: Icons.edit_outlined,
                                   onTap: () => onEdit(z),
                                 ),
                                 const SizedBox(width: 6),
-                                _ActionBtn(
+                                AppActionButton(
                                   icon: Icons.delete_outline_rounded,
                                   isDestructive: true,
                                   onTap: () => onDelete(z),
                                 ),
                                 const SizedBox(width: 6),
-                                _ActionBtn(
+                                AppActionButton(
                                   icon: Icons.visibility,
                                   onTap: () => context.go('/zona/${z.id}'),
                                 ),
@@ -278,7 +208,14 @@ class _ZonaTable extends StatelessWidget {
                               style: const TextStyle(color: Color(0xFF6B7280)),
                             ),
                           ),
-                          DataCell(StatusBadge(status: z.status)),
+                          DataCell(
+                            StatusBadge(
+                              label: z.status.label,
+                              bg: z.status.badgeBg,
+                              fg: z.status.badgeColor,
+                              dot: z.status.dotColor,
+                            ),
+                          ),
                         ],
                       ),
                     )
@@ -304,7 +241,9 @@ class _ZonaMobileList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const _EmptyState();
+    if (items.isEmpty) {
+      return const AppEmptyState(message: 'Tidak ada zona ditemukan');
+    }
     return Column(
       children: items
           .map(
@@ -368,11 +307,16 @@ class _ZonaMobileCard extends StatelessWidget {
                   ],
                 ),
               ),
-              StatusBadge(status: zona.status),
+              StatusBadge(
+                label: zona.status.label,
+                bg: zona.status.badgeBg,
+                fg: zona.status.badgeColor,
+                dot: zona.status.dotColor,
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          _MobileField(label: 'Lokasi', value: zona.lokasi.nama),
+          AppMobileField(label: 'Lokasi', value: zona.lokasi.nama),
           const SizedBox(height: 12),
           const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
           const SizedBox(height: 10),
@@ -413,42 +357,6 @@ class _ZonaMobileCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _MobileField extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-
-  const _MobileField({
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            color: valueColor ?? const Color(0xFF111827),
-            fontWeight: valueColor != null
-                ? FontWeight.w500
-                : FontWeight.normal,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -566,20 +474,20 @@ class _ZonaFormDialogState extends ConsumerState<_ZonaFormDialog> {
               padding: const EdgeInsets.all(18),
               child: Column(
                 children: [
-                  _FormField(
+                  AppFormField(
                     label: 'Kode Zona',
                     controller: _kode,
                     hint: 'cth. Z-01',
                   ),
                   const SizedBox(height: 12),
-                  _FormField(
+                  AppFormField(
                     label: 'Nama Zona',
                     controller: _nama,
                     hint: 'cth. Zona Administrasi',
                   ),
                   const SizedBox(height: 12),
                   if (_lokasi == null)
-                    _DropdownField<Lokasi>(
+                    AppDropdownField<Lokasi>(
                       label: 'Lokasi',
                       value: _lokasi,
                       hint: 'Pilih lokasi...',
@@ -592,7 +500,7 @@ class _ZonaFormDialogState extends ConsumerState<_ZonaFormDialog> {
                       onChanged: (v) => setState(() => _lokasi = v),
                     ),
                   if (_lokasi == null) const SizedBox(height: 12),
-                  _DropdownField<StatusZona>(
+                  AppDropdownField<StatusZona>(
                     label: 'Status',
                     value: _status,
                     items: StatusZona.values
@@ -729,252 +637,6 @@ class _ZonaDeleteDialog extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ── Shared widgets ────────────────────────────────────────
-
-class StatusBadge extends StatelessWidget {
-  final StatusZona status;
-
-  const StatusBadge({super.key, required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: status.badgeBg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 5,
-            height: 5,
-            decoration: BoxDecoration(
-              color: status.dotColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            status.label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: status.badgeColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool isDestructive;
-
-  const _ActionBtn({
-    required this.icon,
-    required this.onTap,
-    this.isDestructive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: isDestructive
-              ? const Color(0xFFFEE2E2)
-              : const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: isDestructive
-                ? const Color(0xFFFCA5A5)
-                : const Color(0xFFE5E7EB),
-            width: 0.5,
-          ),
-        ),
-        child: Icon(
-          icon,
-          size: 13,
-          color: isDestructive
-              ? const Color(0xFFEF4444)
-              : const Color(0xFF6B7280),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 40),
-      child: Center(
-        child: Text(
-          'Tidak ada zona ditemukan',
-          style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-        ),
-      ),
-    );
-  }
-}
-
-class _FormField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final String hint;
-  final TextInputType keyboardType;
-
-  const _FormField({
-    required this.label,
-    required this.controller,
-    this.hint = '',
-    this.keyboardType = TextInputType.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF6B7280),
-          ),
-        ),
-        const SizedBox(height: 5),
-        SizedBox(
-          height: 36,
-          child: TextField(
-            controller: controller,
-            keyboardType: keyboardType,
-            style: const TextStyle(fontSize: 13),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFFD1D5DB),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 0.5,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 0.5,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFF6366F1),
-                  width: 1,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DropdownField<T> extends StatelessWidget {
-  final String label;
-  final T? value;
-  final String? hint;
-  final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?> onChanged;
-
-  const _DropdownField({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-    this.hint,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF6B7280),
-          ),
-        ),
-        const SizedBox(height: 5),
-        SizedBox(
-          height: 36,
-          child: DropdownButtonFormField<T>(
-            value: value,
-            items: items,
-            onChanged: onChanged,
-            hint: hint != null
-                ? Text(
-                    hint!,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFFD1D5DB),
-                    ),
-                  )
-                : null,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF111827)),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 0.5,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 0.5,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFF6366F1),
-                  width: 1,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

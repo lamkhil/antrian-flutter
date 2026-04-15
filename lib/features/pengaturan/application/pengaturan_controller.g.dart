@@ -13,7 +13,7 @@ part of 'pengaturan_controller.dart';
 final pengaturanControllerProvider = PengaturanControllerProvider._();
 
 final class PengaturanControllerProvider
-    extends $NotifierProvider<PengaturanController, int> {
+    extends $NotifierProvider<PengaturanController, User?> {
   PengaturanControllerProvider._()
     : super(
         from: null,
@@ -33,28 +33,28 @@ final class PengaturanControllerProvider
   PengaturanController create() => PengaturanController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
+  Override overrideWithValue(User? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
+      providerOverride: $SyncValueProvider<User?>(value),
     );
   }
 }
 
 String _$pengaturanControllerHash() =>
-    r'7146b61120d210c05489ff759cbad1576e0836cf';
+    r'a83965158ecf5c16de6074c32790be51578dfe7d';
 
-abstract class _$PengaturanController extends $Notifier<int> {
-  int build();
+abstract class _$PengaturanController extends $Notifier<User?> {
+  User? build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<int, int>;
+    final ref = this.ref as $Ref<User?, User?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<int, int>,
-              int,
+              AnyNotifier<User?, User?>,
+              User?,
               Object?,
               Object?
             >;

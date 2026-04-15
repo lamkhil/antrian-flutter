@@ -1,6 +1,6 @@
 import 'package:antrian/data/models/layanan.dart';
 import 'package:antrian/data/models/zona.dart';
-import 'package:antrian/data/services/zona/zona_services.dart';
+import 'package:antrian/data/services/layanan/layanan_services.dart';
 import 'package:antrian/features/zona/application/layanan_zona_controller.dart';
 import 'package:antrian/globals/providers/lokasi/lokasi_provider.dart';
 import 'package:antrian/globals/widgets/app_dialog.dart';
@@ -46,7 +46,7 @@ class LayananController extends _$LayananController {
   Future<void> load() async {
     final lokasi = ref.read(lokasiControllerProvider).aktif;
     state = state.copyWith(status: LayananStatus.loading);
-    final result = await ZonaServices.fetchLayananByLokasi(lokasi);
+    final result = await LayananServices.fetchByLokasi(lokasi);
     if (result.success) {
       state = state.copyWith(
         layanan: result.data,
@@ -84,7 +84,7 @@ class LayananController extends _$LayananController {
       status: status,
     );
     AppDialog.loading(message: 'Menambahkan layanan...');
-    final result = await ZonaServices.tambahLayanan(newLayanan);
+    final result = await LayananServices.add(newLayanan);
     AppDialog.close();
     if (result.success) {
       state = state.copyWith(layanan: [...state.layanan, newLayanan]);
@@ -105,7 +105,7 @@ class LayananController extends _$LayananController {
         status: layanan.status,
       );
       AppDialog.loading(message: 'Menyimpan perubahan...');
-      final result = await ZonaServices.editLayanan(updatedLayanan);
+      final result = await LayananServices.update(updatedLayanan);
       AppDialog.close();
       if (!result.success) {
         AppDialog.error(message: result.message ?? 'Gagal menyimpan perubahan');
@@ -119,7 +119,16 @@ class LayananController extends _$LayananController {
     }
   }
 
-  void hapus(String id) => state = state.copyWith(
-    layanan: state.layanan.where((l) => l.id != id).toList(),
-  );
+  Future<void> hapus(String id) async {
+    AppDialog.loading(message: 'Menghapus layanan...');
+    final result = await LayananServices.delete(id);
+    AppDialog.close();
+    if (result.success) {
+      state = state.copyWith(
+        layanan: state.layanan.where((l) => l.id != id).toList(),
+      );
+    } else {
+      AppDialog.error(message: result.message ?? 'Gagal menghapus layanan');
+    }
+  }
 }

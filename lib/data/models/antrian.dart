@@ -1,18 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:antrian/data/models/layanan.dart';
+import 'package:antrian/data/models/loket.dart';
 import 'package:antrian/data/models/zona.dart';
 import 'package:antrian/data/models/lokasi.dart';
 
 enum StatusAntrian { menunggu, dipanggil, dilayani, dilewati, selesai }
 
-class Antrian {
+class Antrian extends Equatable {
   final String id;
   final String nomorAntrian;
   final String nama;
   final String layananId;
   final String zonaId;
   final String lokasiId;
+  final String? loketId;
   final StatusAntrian status;
   final DateTime waktuDaftar;
   final DateTime? waktuDipanggil;
@@ -20,6 +23,7 @@ class Antrian {
   final Layanan layanan;
   final Zona zona;
   final Lokasi lokasi;
+  final Loket? loket;
 
   const Antrian({
     required this.id,
@@ -33,6 +37,8 @@ class Antrian {
     required this.layanan,
     required this.zona,
     required this.lokasi,
+    this.loketId,
+    this.loket,
     this.waktuDipanggil,
     this.waktuSelesai,
   });
@@ -44,6 +50,7 @@ class Antrian {
     layananId: json['layananId'],
     zonaId: json['zonaId'],
     lokasiId: json['lokasiId'],
+    loketId: json['loketId'],
     status: StatusAntrian.values.firstWhere(
       (s) => s.name == (json['status'] as String).toLowerCase(),
       orElse: () => StatusAntrian.menunggu,
@@ -58,6 +65,7 @@ class Antrian {
     layanan: Layanan.fromJson(json['layanan'] ?? {}),
     zona: Zona.fromJson(json['zona'] ?? {}),
     lokasi: Lokasi.fromJson(json['lokasi'] ?? {}),
+    loket: json['loket'] != null ? Loket.fromJson(json['loket']) : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -67,6 +75,7 @@ class Antrian {
     'layananId': layananId,
     'zonaId': zonaId,
     'lokasiId': lokasiId,
+    'loketId': loketId,
     'status': status.name,
     'waktuDaftar': waktuDaftar.toIso8601String(),
     'waktuDipanggil': waktuDipanggil?.toIso8601String(),
@@ -74,7 +83,11 @@ class Antrian {
     'layanan': layanan.toJson(),
     'zona': zona.toJson(),
     'lokasi': lokasi.toJson(),
+    'loket': loket?.toJson(),
   };
+
+  @override
+  List<Object?> get props => [id];
 }
 
 extension StatusAntrianX on StatusAntrian {

@@ -24,10 +24,13 @@ GoRouter appRouter(Ref ref) {
     redirect: (context, state) {
       final user = FirebaseAuth.instance.currentUser;
 
-      final isLogin = state.matchedLocation == '/login';
+      final loc = state.matchedLocation;
+      final isLogin = loc == '/login';
+      // Kiosk & layar display boleh diakses tanpa login (mesin publik).
+      final isPublic = loc == '/kiosk' || loc.startsWith('/display');
 
-      // belum login → paksa ke login
-      if (user == null && !isLogin) {
+      // belum login → paksa ke login, kecuali halaman publik
+      if (user == null && !isLogin && !isPublic) {
         return '/login';
       }
 

@@ -1,15 +1,17 @@
+import 'package:antrian/data/models/antrian.dart';
 import 'package:antrian/features/home/presentation/widgets/_dash_card.dart';
 import 'package:flutter/material.dart';
-import '../../application/home_state.dart';
+import 'package:intl/intl.dart';
 import 'antrian_aktif_card.dart' show StatusBadge;
 
 class RiwayatCard extends StatelessWidget {
-  final List<RiwayatItem> items;
+  final List<Antrian> items;
 
   const RiwayatCard({super.key, required this.items});
 
   @override
   Widget build(BuildContext context) {
+    final fmt = DateFormat('HH:mm');
     return DashCard(
       title: 'Transaksi terbaru',
       child: Table(
@@ -21,19 +23,20 @@ class RiwayatCard extends StatelessWidget {
         },
         children: [
           _headerRow(['No.', 'Layanan', 'Waktu', 'Status']),
-          ...items.map(
-            (e) => TableRow(
+          ...items.map((e) {
+            final t = e.waktuSelesai ?? e.waktuDipanggil ?? e.waktuDaftar;
+            return TableRow(
               children: [
-                _cell(e.nomor, bold: true),
-                _cell(e.layanan),
-                _cell(e.waktu),
+                _cell(e.nomorAntrian, bold: true),
+                _cell(e.layanan.nama),
+                _cell(fmt.format(t)),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: StatusBadge(e.status),
                 ),
               ],
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );

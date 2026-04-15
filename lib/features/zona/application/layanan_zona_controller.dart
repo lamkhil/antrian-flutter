@@ -1,6 +1,6 @@
 import 'package:antrian/data/models/layanan.dart';
 import 'package:antrian/data/models/zona.dart';
-import 'package:antrian/data/services/zona/zona_services.dart';
+import 'package:antrian/data/services/layanan/layanan_services.dart';
 import 'package:antrian/features/zona/application/zona_controller.dart';
 import 'package:antrian/globals/widgets/app_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -41,7 +41,7 @@ class LayananZonaController extends _$LayananZonaController {
 
   void loadLayanan(String zonaId) async {
     state = state.copyWith(status: LayananZonaStatus.loading);
-    final result = await ZonaServices.fetchLayananByZona(zonaId);
+    final result = await LayananServices.fetchByZona(zonaId);
     if (result.success) {
       state = state.copyWith(
         layanan: result.data,
@@ -79,7 +79,7 @@ class LayananZonaController extends _$LayananZonaController {
       status: status,
     );
     AppDialog.loading(message: 'Menambahkan layanan...');
-    final result = await ZonaServices.addLayanan(newLayanan);
+    final result = await LayananServices.add(newLayanan);
     AppDialog.close();
     if (result.success) {
       state = state.copyWith(
@@ -94,7 +94,7 @@ class LayananZonaController extends _$LayananZonaController {
     }
   }
 
-  void editLayanan(
+  Future<void> editLayanan(
     String id, {
     required String kode,
     required String nama,
@@ -102,23 +102,42 @@ class LayananZonaController extends _$LayananZonaController {
     required int durasiMenit,
     required int biaya,
     required StatusLayanan status,
-  }) {
-    state = state.copyWith(
-      layanan: state.layanan.map((l) {
-        if (l.id != id) return l;
-        return l.copyWith(
-          kode: kode,
-          nama: nama,
-          deskripsi: deskripsi,
-          durasiMenit: durasiMenit,
-          biaya: biaya,
-          status: status,
-        );
-      }).toList(),
+  }) async {
+    final index = state.layanan.indexWhere((l) => l.id == id);
+    if (index == -1) {
+      AppDialog.error(message: 'Layanan tidak ditemukan');
+      return;
+    }
+    final updated = state.layanan[index].copyWith(
+      kode: kode,
+      nama: nama,
+      deskripsi: deskripsi,
+      durasiMenit: durasiMenit,
+      biaya: biaya,
+      status: status,
     );
+    AppDialog.loading(message: 'Menyimpan perubahan...');
+    final result = await LayananServices.update(updated);
+    AppDialog.close();
+    if (!result.success) {
+      AppDialog.error(message: result.message ?? 'Gagal menyimpan perubahan');
+      return;
+    }
+    final newList = [...state.layanan];
+    newList[index] = updated;
+    state = state.copyWith(layanan: newList);
   }
 
-  void hapusLayanan(String id) => state = state.copyWith(
-    layanan: state.layanan.where((l) => l.id != id).toList(),
-  );
+  Future<void> hapusLayanan(String id) async {
+    AppDialog.loading(message: 'Menghapus layanan...');
+    final result = await LayananServices.delete(id);
+    AppDialog.close();
+    if (result.success) {
+      state = state.copyWith(
+        layanan: state.layanan.where((l) => l.id != id).toList(),
+      );
+    } else {
+      AppDialog.error(message: result.message ?? 'Gagal menghapus layanan');
+    }
+  }
 }

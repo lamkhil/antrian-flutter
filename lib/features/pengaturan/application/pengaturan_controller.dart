@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'pengaturan_controller.g.dart';
@@ -5,7 +6,10 @@ part 'pengaturan_controller.g.dart';
 @riverpod
 class PengaturanController extends _$PengaturanController {
   @override
-  int build() => 0;
+  User? build() => FirebaseAuth.instance.currentUser;
 
-  void increment() => state++;
+  Future<void> logout() async {
+    await FirebaseAuth.instance.signOut();
+    state = null;
+  }
 }

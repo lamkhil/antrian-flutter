@@ -1,10 +1,11 @@
 import 'package:antrian/data/models/lokasi.dart';
 import 'package:antrian/data/models/zona.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
 enum StatusLayanan { aktif, nonAktif }
 
-class Layanan {
+class Layanan extends Equatable {
   final String id;
   final String zonaId;
   final String lokasiId;
@@ -85,6 +86,9 @@ class Layanan {
     'zona': zona.toJson(),
     'lokasi': lokasi.toJson(),
   };
+
+  @override
+  List<Object?> get props => [id];
 }
 
 extension StatusLayananX on StatusLayanan {

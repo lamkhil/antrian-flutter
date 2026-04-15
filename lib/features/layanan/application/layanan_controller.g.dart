@@ -41,7 +41,7 @@ final class LayananControllerProvider
   }
 }
 
-String _$layananControllerHash() => r'6c1d4ca589cc75d72b79fad825d2624e61538630';
+String _$layananControllerHash() => r'f524d07623eadf8620f6c9ffc822dbd192769503';
 
 abstract class _$LayananController extends $Notifier<LayananState> {
   LayananState build();

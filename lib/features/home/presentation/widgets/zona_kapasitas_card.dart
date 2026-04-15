@@ -1,15 +1,15 @@
+import 'package:antrian/data/models/zona.dart';
 import 'package:antrian/features/home/presentation/widgets/_dash_card.dart';
 import 'package:flutter/material.dart';
-import '../../application/home_state.dart';
 
 class ZonaKapasitasCard extends StatelessWidget {
-  final List<ZonaItem> zones;
+  final List<Zona> zones;
 
   const ZonaKapasitasCard({super.key, required this.zones});
 
   @override
   Widget build(BuildContext context) {
-    final aktif = zones.where((z) => z.terisi > 0).length;
+    final aktif = zones.where((z) => z.antrianAktif > 0).length;
 
     return DashCard(
       title: 'Kapasitas zona',
@@ -24,9 +24,20 @@ class ZonaKapasitasCard extends StatelessWidget {
 }
 
 class _ZonaRow extends StatelessWidget {
-  final ZonaItem zona;
+  final Zona zona;
 
   const _ZonaRow({required this.zona});
+
+  double get _persen {
+    if (zona.kapasitas == 0) return 0;
+    return zona.antrianAktif / zona.kapasitas;
+  }
+
+  Color get _warna {
+    if (_persen >= 0.95) return const Color(0xFFE24B4A);
+    if (_persen >= 0.85) return const Color(0xFFEF9F27);
+    return const Color(0xFF6366F1);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +58,7 @@ class _ZonaRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${zona.terisi}/${zona.kapasitas}',
+                '${zona.antrianAktif}/${zona.kapasitas}',
                 style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
               ),
             ],
@@ -56,10 +67,10 @@ class _ZonaRow extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
-              value: zona.persen,
+              value: _persen.clamp(0, 1),
               minHeight: 4,
               backgroundColor: const Color(0xFFF3F4F6),
-              valueColor: AlwaysStoppedAnimation<Color>(zona.warna),
+              valueColor: AlwaysStoppedAnimation<Color>(_warna),
             ),
           ),
         ],

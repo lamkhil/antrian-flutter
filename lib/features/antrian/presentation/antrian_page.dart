@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/antrian.dart';
+import '../../../globals/widgets/app_empty_state.dart';
 import '../../../globals/widgets/app_layout.dart';
+import '../../../globals/widgets/status_badge.dart';
 import '../application/antrian_controller.dart';
 
 class AntrianPage extends ConsumerStatefulWidget {
@@ -490,7 +492,7 @@ class _AntrianTable extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: items.isEmpty
-            ? const _EmptyState()
+            ? const AppEmptyState(message: 'Tidak ada data antrian')
             : SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: ConstrainedBox(
@@ -581,7 +583,14 @@ class _AntrianTable extends StatelessWidget {
                               ],
                             ),
                           ),
-                          DataCell(_StatusBadge(status: a.status)),
+                          DataCell(
+                            StatusBadge(
+                              label: a.status.label,
+                              bg: a.status.badgeBg,
+                              fg: a.status.badgeColor,
+                              dot: a.status.dotColor,
+                            ),
+                          ),
                           DataCell(_WaktuCell(dt: a.waktuDaftar)),
                           DataCell(_WaktuCell(dt: a.waktuDipanggil)),
                           DataCell(_WaktuCell(dt: a.waktuSelesai)),
@@ -605,7 +614,9 @@ class _AntrianMobileList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const _EmptyState();
+    if (items.isEmpty) {
+      return const AppEmptyState(message: 'Tidak ada data antrian');
+    }
     return Column(
       children: items.map((a) => _AntrianMobileCard(antrian: a)).toList(),
     );
@@ -646,7 +657,12 @@ class _AntrianMobileCard extends StatelessWidget {
                   ),
                 ),
               ),
-              _StatusBadge(status: antrian.status),
+              StatusBadge(
+                label: antrian.status.label,
+                bg: antrian.status.badgeBg,
+                fg: antrian.status.badgeColor,
+                dot: antrian.status.dotColor,
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -710,41 +726,6 @@ class _NomorChip extends StatelessWidget {
   );
 }
 
-class _StatusBadge extends StatelessWidget {
-  final StatusAntrian status;
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(
-      color: status.badgeBg,
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 5,
-          height: 5,
-          decoration: BoxDecoration(
-            color: status.dotColor,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          status.label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: status.badgeColor,
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
 class _WaktuCell extends StatelessWidget {
   final DateTime? dt;
@@ -839,17 +820,3 @@ class _ErrorBanner extends StatelessWidget {
   );
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: 40),
-    child: Center(
-      child: Text(
-        'Tidak ada data antrian',
-        style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-      ),
-    ),
-  );
-}

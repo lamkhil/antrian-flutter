@@ -1,14 +1,19 @@
 import 'package:antrian/extension/size.dart';
 import 'package:antrian/features/zona/application/detail_zona_controller.dart';
 import 'package:antrian/features/zona/application/layanan_zona_controller.dart';
-import 'package:antrian/features/zona/presentation/zona_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../data/models/layanan.dart';
 import '../../../data/models/zona.dart';
+import '../../../globals/widgets/app_action_button.dart';
+import '../../../globals/widgets/app_dropdown_field.dart';
+import '../../../globals/widgets/app_empty_state.dart';
+import '../../../globals/widgets/app_form_field.dart';
 import '../../../globals/widgets/app_layout.dart';
+import '../../../globals/widgets/app_mobile_field.dart';
+import '../../../globals/widgets/status_badge.dart';
 
 class ZonaDetailPage extends ConsumerStatefulWidget {
   final String id;
@@ -230,7 +235,12 @@ class _ZonaInfoCard extends StatelessWidget {
                   ],
                 ),
               ),
-              StatusBadge(status: zona.status),
+              StatusBadge(
+                label: zona.status.label,
+                bg: zona.status.badgeBg,
+                fg: zona.status.badgeColor,
+                dot: zona.status.dotColor,
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -331,7 +341,10 @@ class _LayananTable extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: items.isEmpty
-            ? const _EmptyState()
+            ? const AppEmptyState(
+                message: 'Belum ada layanan. Tambahkan layanan pertama.',
+                verticalPadding: 36,
+              )
             : DataTable(
                 headingRowColor: WidgetStateProperty.all(
                   const Color(0xFFF9FAFB),
@@ -365,15 +378,19 @@ class _LayananTable extends StatelessWidget {
                           DataCell(
                             Row(
                               children: [
-                                _ActionBtn(
+                                AppActionButton(
                                   icon: Icons.edit_outlined,
                                   onTap: () => onEdit(l),
+                                  size: 26,
+                                  iconSize: 12,
                                 ),
                                 const SizedBox(width: 6),
-                                _ActionBtn(
+                                AppActionButton(
                                   icon: Icons.delete_outline_rounded,
                                   isDestructive: true,
                                   onTap: () => onDelete(l),
+                                  size: 26,
+                                  iconSize: 12,
                                 ),
                               ],
                             ),
@@ -421,7 +438,14 @@ class _LayananTable extends StatelessWidget {
                               ),
                             ),
                           ),
-                          DataCell(_LayananStatusBadge(status: l.status)),
+                          DataCell(
+                            StatusBadge(
+                              label: l.status.label,
+                              bg: l.status.badgeBg,
+                              fg: l.status.badgeColor,
+                              dot: l.status.dotColor,
+                            ),
+                          ),
                         ],
                       ),
                     )
@@ -447,7 +471,12 @@ class _LayananMobileList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const _EmptyState();
+    if (items.isEmpty) {
+      return const AppEmptyState(
+        message: 'Belum ada layanan. Tambahkan layanan pertama.',
+        verticalPadding: 36,
+      );
+    }
     return Column(
       children: items
           .map(
@@ -517,7 +546,12 @@ class _LayananMobileCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _LayananStatusBadge(status: layanan.status),
+              StatusBadge(
+                label: layanan.status.label,
+                bg: layanan.status.badgeBg,
+                fg: layanan.status.badgeColor,
+                dot: layanan.status.dotColor,
+              ),
             ],
           ),
           if (layanan.deskripsi.isNotEmpty) ...[
@@ -530,12 +564,12 @@ class _LayananMobileCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              _MobileField(
+              AppMobileField(
                 label: 'Durasi',
                 value: '${layanan.durasiMenit} mnt',
               ),
               const SizedBox(width: 16),
-              _MobileField(
+              AppMobileField(
                 label: 'Biaya',
                 value: layanan.biaya == 0
                     ? 'Gratis'
@@ -587,28 +621,6 @@ class _LayananMobileCard extends StatelessWidget {
   }
 }
 
-class _MobileField extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _MobileField({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
-      ),
-      const SizedBox(height: 2),
-      Text(
-        value,
-        style: const TextStyle(fontSize: 13, color: Color(0xFF111827)),
-      ),
-    ],
-  );
-}
 
 // ── Form dialog ───────────────────────────────────────────
 
@@ -726,7 +738,7 @@ class _LayananFormDialogState extends ConsumerState<_LayananFormDialog> {
                   Row(
                     children: [
                       Expanded(
-                        child: _FormField(
+                        child: AppFormField(
                           label: 'Kode Layanan',
                           controller: _kode,
                           hint: 'cth. LY-01',
@@ -734,78 +746,31 @@ class _LayananFormDialogState extends ConsumerState<_LayananFormDialog> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Status',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF6B7280),
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            SizedBox(
-                              height: 36,
-                              child: DropdownButtonFormField<StatusLayanan>(
-                                value: _status,
-                                onChanged: (v) => setState(
-                                  () => _status = v ?? StatusLayanan.aktif,
+                        child: AppDropdownField<StatusLayanan>(
+                          label: 'Status',
+                          value: _status,
+                          items: StatusLayanan.values
+                              .map(
+                                (s) => DropdownMenuItem(
+                                  value: s,
+                                  child: Text(s.label),
                                 ),
-                                items: StatusLayanan.values
-                                    .map(
-                                      (s) => DropdownMenuItem(
-                                        value: s,
-                                        child: Text(s.label),
-                                      ),
-                                    )
-                                    .toList(),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF111827),
-                                ),
-                                decoration: InputDecoration(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE5E7EB),
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE5E7EB),
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFF6366F1),
-                                      width: 1,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                              )
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _status = v ?? StatusLayanan.aktif),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _FormField(
+                  AppFormField(
                     label: 'Nama Layanan',
                     controller: _nama,
                     hint: 'cth. Pembuatan KTP',
                   ),
                   const SizedBox(height: 12),
-                  _FormField(
+                  AppFormField(
                     label: 'Deskripsi',
                     controller: _desk,
                     hint: 'Deskripsi singkat layanan...',
@@ -815,7 +780,7 @@ class _LayananFormDialogState extends ConsumerState<_LayananFormDialog> {
                   Row(
                     children: [
                       Expanded(
-                        child: _FormField(
+                        child: AppFormField(
                           label: 'Durasi (menit)',
                           controller: _durasi,
                           hint: '30',
@@ -824,7 +789,7 @@ class _LayananFormDialogState extends ConsumerState<_LayananFormDialog> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: _FormField(
+                        child: AppFormField(
                           label: 'Biaya (Rp)',
                           controller: _biaya,
                           hint: '0',
@@ -963,158 +928,6 @@ class _LayananDeleteDialog extends ConsumerWidget {
   }
 }
 
-// ── Shared widgets ────────────────────────────────────────
-
-class _LayananStatusBadge extends StatelessWidget {
-  final StatusLayanan status;
-
-  const _LayananStatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(
-      color: status.badgeBg,
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 5,
-          height: 5,
-          decoration: BoxDecoration(
-            color: status.dotColor,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          status.label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: status.badgeColor,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool isDestructive;
-
-  const _ActionBtn({
-    required this.icon,
-    required this.onTap,
-    this.isDestructive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(6),
-    child: Container(
-      width: 26,
-      height: 26,
-      decoration: BoxDecoration(
-        color: isDestructive
-            ? const Color(0xFFFEE2E2)
-            : const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: isDestructive
-              ? const Color(0xFFFCA5A5)
-              : const Color(0xFFE5E7EB),
-          width: 0.5,
-        ),
-      ),
-      child: Icon(
-        icon,
-        size: 12,
-        color: isDestructive
-            ? const Color(0xFFEF4444)
-            : const Color(0xFF6B7280),
-      ),
-    ),
-  );
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: 36),
-    child: Center(
-      child: Text(
-        'Belum ada layanan. Tambahkan layanan pertama.',
-        style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-      ),
-    ),
-  );
-}
-
-class _FormField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final String hint;
-  final TextInputType keyboardType;
-  final int maxLines;
-
-  const _FormField({
-    required this.label,
-    required this.controller,
-    this.hint = '',
-    this.keyboardType = TextInputType.text,
-    this.maxLines = 1,
-  });
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF6B7280),
-        ),
-      ),
-      const SizedBox(height: 5),
-      TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        style: const TextStyle(fontSize: 13),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(fontSize: 13, color: Color(0xFFD1D5DB)),
-          contentPadding: maxLines > 1
-              ? const EdgeInsets.all(10)
-              : const EdgeInsets.symmetric(horizontal: 10),
-          isDense: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 0.5),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 0.5),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFF6366F1), width: 1),
-          ),
-        ),
-      ),
-    ],
-  );
-}
 
 class _ZonaInfoCardShimmer extends StatelessWidget {
   const _ZonaInfoCardShimmer();

@@ -1,5 +1,6 @@
 import 'package:antrian/data/models/lokasi.dart';
 import 'package:antrian/data/models/notifikasi.dart';
+import 'package:antrian/data/services/notifikasi/notifikasi_services.dart';
 import 'package:antrian/extension/size.dart';
 import 'package:antrian/globals/providers/lokasi/lokasi_provider.dart';
 import 'package:flutter/material.dart';
@@ -604,6 +605,7 @@ class _NotifikasiButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final daftarNotifikasi = NotifikasiServices.fetchDummy();
     final belumDibaca = daftarNotifikasi.any((n) => !n.sudahDibaca);
 
     return GestureDetector(
@@ -693,7 +695,7 @@ class _NotifikasiDropdown extends StatelessWidget {
                       ),
                     ),
                     // List
-                    ...daftarNotifikasi.map(
+                    ...NotifikasiServices.fetchDummy().map(
                       (n) => _NotifikasiItem(notifikasi: n),
                     ),
                     // Footer
