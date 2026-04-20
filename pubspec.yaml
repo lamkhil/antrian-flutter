@@ -45,6 +45,8 @@ dependencies:
   intl: ^0.20.2
   shimmer: ^3.0.0
   equatable: ^2.0.8
+  flutter_filament:
+    path: packages/flutter_filament
 
 dev_dependencies:
   flutter_test:

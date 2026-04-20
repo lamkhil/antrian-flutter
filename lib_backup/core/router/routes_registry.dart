@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import '../filament/panel_config.dart';
 
 /// mason:imports
 import '../../features/loket/loket_route.dart';
@@ -15,6 +16,7 @@ import '../../features/display/display_route.dart';
 
 final List<GoRoute> appRoutes = [
   /// mason:routes
+  ...adminPanel.buildRoutes(),
   loketRoute,
   pengaturanRoute,
   laporanRoute,

@@ -1,3 +1,11 @@
 bricks:
   feature:
     path: feature
+  model:
+    path: bricks/model
+  resource:
+    path: bricks/resource
+  page:
+    path: bricks/page
+  widget:
+    path: bricks/widget

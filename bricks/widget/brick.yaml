@@ -1,0 +1,23 @@
+name: widget
+description: Generate a dashboard widget (stat / chart / custom).
+version: 0.1.0+1
+environment:
+  mason: ^0.1.2
+vars:
+  name:
+    type: string
+    description: Widget class name (PascalCase)
+    prompt: Widget name
+  type:
+    type: enum
+    values:
+      - stat
+      - chart
+      - custom
+    default: stat
+    prompt: Widget type
+  columnSpan:
+    type: number
+    description: Grid columns (1-12)
+    default: 6
+    prompt: Column span

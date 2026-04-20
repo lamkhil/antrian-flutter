@@ -1,0 +1,24 @@
+name: page
+description: Generate a custom FilamentPage attached to the panel's sidebar.
+version: 0.1.0+1
+environment:
+  mason: ^0.1.2
+vars:
+  name:
+    type: string
+    description: Page class name (PascalCase)
+    prompt: Page name
+  title:
+    type: string
+    description: Title shown in top bar
+    prompt: Title
+  icon:
+    type: string
+    description: Material icon name
+    prompt: Icon
+    default: description
+  group:
+    type: string
+    description: Optional navigation group
+    prompt: Navigation group (blank = none)
+    default: ''

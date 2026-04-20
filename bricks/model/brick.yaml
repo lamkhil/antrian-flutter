@@ -1,0 +1,15 @@
+name: model
+description: Generate a Dart model in lib/data/models/.
+version: 0.1.0+1
+environment:
+  mason: ^0.1.2
+vars:
+  name:
+    type: string
+    description: Model class name (e.g. Produk)
+    prompt: Model name (PascalCase)
+  fields:
+    type: string
+    description: 'Comma-separated fields (e.g. "nama:String, harga:int, aktif:bool")'
+    prompt: Fields
+    default: 'nama:String'

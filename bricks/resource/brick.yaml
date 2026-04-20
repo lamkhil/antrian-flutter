@@ -1,0 +1,33 @@
+name: resource
+description: Generate a full Filament-style resource (service + form schema + table schema + resource class + 4 default pages wired via Panel).
+version: 0.1.0+1
+environment:
+  mason: ^0.1.2
+vars:
+  name:
+    type: string
+    description: Model class name this resource is for (e.g. Produk)
+    prompt: Model name (PascalCase)
+  label:
+    type: string
+    description: Singular label shown in UI (e.g. Produk)
+    prompt: Label (singular)
+  pluralLabel:
+    type: string
+    description: Plural label shown in UI (e.g. Produk)
+    prompt: Label (plural)
+  icon:
+    type: string
+    description: Material icon name (e.g. inventory_2, people)
+    prompt: Icon
+    default: inventory_2
+  group:
+    type: string
+    description: Optional navigation group
+    prompt: Navigation group (blank = none)
+    default: ''
+  fields:
+    type: string
+    description: Fields to render in form/table (same syntax as model brick)
+    prompt: Fields
+    default: 'nama:String'
