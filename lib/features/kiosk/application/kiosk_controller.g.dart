@@ -41,7 +41,7 @@ final class KioskControllerProvider
   }
 }
 
-String _$kioskControllerHash() => r'9bbfb2b29a931e3d7a71f5563861d984a3d970d2';
+String _$kioskControllerHash() => r'512298f94c4c1a370474787c4a60c91ba759742a';
 
 abstract class _$KioskController extends $Notifier<KioskState> {
   KioskState build();

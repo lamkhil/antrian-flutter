@@ -11,7 +11,9 @@ class Pengguna extends Equatable {
   final String email;
   final RolePengguna role;
   final StatusPengguna status;
-  final String? lokasiId;
+  /// Daftar lokasi (tenant) yang user ini punya akses.
+  /// Admin global bypass ini — lihat semua lokasi.
+  final List<String> lokasiIds;
 
   const Pengguna({
     required this.id,
@@ -19,7 +21,7 @@ class Pengguna extends Equatable {
     required this.email,
     this.role = RolePengguna.operator,
     this.status = StatusPengguna.aktif,
-    this.lokasiId,
+    this.lokasiIds = const [],
   });
 
   Pengguna copyWith({
@@ -27,14 +29,14 @@ class Pengguna extends Equatable {
     String? email,
     RolePengguna? role,
     StatusPengguna? status,
-    String? lokasiId,
+    List<String>? lokasiIds,
   }) => Pengguna(
     id: id,
     nama: nama ?? this.nama,
     email: email ?? this.email,
     role: role ?? this.role,
     status: status ?? this.status,
-    lokasiId: lokasiId ?? this.lokasiId,
+    lokasiIds: lokasiIds ?? this.lokasiIds,
   );
 
   factory Pengguna.fromJson(Map<String, dynamic> json) => Pengguna(
@@ -49,8 +51,17 @@ class Pengguna extends Equatable {
       (s) => s.name == (json['status'] as String?)?.toLowerCase(),
       orElse: () => StatusPengguna.aktif,
     ),
-    lokasiId: json['lokasiId'],
+    // Kompatibel dengan data lama yang masih punya single `lokasiId`.
+    lokasiIds: _readLokasiIds(json),
   );
+
+  static List<String> _readLokasiIds(Map<String, dynamic> json) {
+    final list = json['lokasiIds'];
+    if (list is List) return list.map((e) => e.toString()).toList();
+    final single = json['lokasiId'];
+    if (single is String && single.isNotEmpty) return [single];
+    return const [];
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -58,7 +69,7 @@ class Pengguna extends Equatable {
     'email': email,
     'role': role.name,
     'status': status.name,
-    'lokasiId': lokasiId,
+    'lokasiIds': lokasiIds,
   };
 
   @override

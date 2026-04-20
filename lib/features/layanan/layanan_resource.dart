@@ -10,6 +10,7 @@ final layananDataSource = FirestoreDataSource<Layanan>(
   fromJson: Layanan.fromJson,
   toJson: (r) => r.toJson(),
   idOf: (r) => r.id,
+  scopeField: 'lokasiId',
   beforeWrite: (data) async {
     final zonaId = data['zonaId'] as String?;
     if (zonaId != null) {

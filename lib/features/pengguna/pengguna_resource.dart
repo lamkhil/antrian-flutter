@@ -61,10 +61,16 @@ class PenggunaResource extends Resource<Pengguna> {
               SelectOption('nonAktif', 'Non-aktif'),
             ],
           ),
-          Select<String>(
-            name: 'lokasiId',
-            label: 'Lokasi (opsional)',
-            options: lokasiCache.selectOptions(),
+          CheckboxList<String>(
+            name: 'lokasiIds',
+            label: 'Lokasi yang boleh diakses',
+            helperText:
+                'Admin global (role = Admin) otomatis bisa akses semua lokasi.',
+            options: [
+              for (final l in lokasiCache.items)
+                CheckboxListOption(l.id, l.nama),
+            ],
+            columns: 2,
             columnSpan: 2,
           ),
         ],

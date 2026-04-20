@@ -10,6 +10,7 @@ final zonaDataSource = FirestoreDataSource<Zona>(
   fromJson: Zona.fromJson,
   toJson: (r) => r.toJson(),
   idOf: (r) => r.id,
+  scopeField: 'lokasiId',
   // Denormalisasi: enrich payload dengan objek `lokasi` lengkap.
   beforeWrite: (data) async {
     final lokasiId = data['lokasiId'] as String?;

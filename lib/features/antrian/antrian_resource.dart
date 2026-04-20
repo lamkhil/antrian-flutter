@@ -8,6 +8,7 @@ final antrianDataSource = FirestoreDataSource<Antrian>(
   fromJson: Antrian.fromJson,
   toJson: (r) => r.toJson(),
   idOf: (r) => r.id,
+  scopeField: 'lokasiId',
 );
 
 class AntrianResource extends Resource<Antrian> {

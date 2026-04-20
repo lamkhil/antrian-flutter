@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_filament/flutter_filament.dart';
 
 // filament:imports
+import '../../data/models/lokasi.dart';
 import '../../features/antrian/antrian_resource.dart';
 import '../../features/home/widgets/antrian_aktif_widget.dart';
 import '../../features/home/widgets/grafik_mingguan_widget.dart';
@@ -14,12 +15,15 @@ import '../../features/lokasi/lokasi_resource.dart';
 import '../../features/pengaturan/pengaturan_page.dart';
 import '../../features/pengguna/pengguna_resource.dart';
 import '../../features/zona/zona_resource.dart';
+import 'antrian_tenant_access.dart';
 
 /// Main admin Panel untuk aplikasi Antrian.
 ///
-/// Sidebar & semua route CRUD auto-generate dari resource + pages + widgets
-/// di bawah ini. Marker `// filament:*-begin/end` dipakai Mason brick
-/// untuk auto-register; jangan dihapus.
+/// Multi-tenant: `Lokasi` menjadi tenant. URL tenant-scoped:
+/// `/admin/{lokasiId}/zona`, `/admin/{lokasiId}/layanan`, dst.
+/// `LokasiResource` sendiri diakses global di `/admin/lokasi`.
+///
+/// User dengan `role == 'admin'` bypass tenant scope (lihat semua data).
 final Panel adminPanel = Panel(
   id: 'admin',
   path: '/admin',
@@ -27,6 +31,13 @@ final Panel adminPanel = Panel(
   theme: const FilamentTheme(colors: FilamentColors.amber),
   dashboardTitle: 'Dashboard',
   dashboardIcon: Icons.dashboard_outlined,
+  tenant: TenantConfig<Lokasi>(
+    resource: LokasiResource(),
+    scopeField: 'lokasiId',
+    labelOf: (l) => l.nama,
+    slugOf: (l) => l.id,
+  ),
+  tenantAccess: AntrianTenantAccess(),
   resources: [
     // filament:resources-begin
     LokasiResource(),

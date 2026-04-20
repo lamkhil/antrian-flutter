@@ -10,6 +10,7 @@ final loketDataSource = FirestoreDataSource<Loket>(
   fromJson: Loket.fromJson,
   toJson: (r) => r.toJson(),
   idOf: (r) => r.id,
+  scopeField: 'lokasiId',
   beforeWrite: (data) async {
     final layananId = data['layananId'] as String?;
     if (layananId != null) {

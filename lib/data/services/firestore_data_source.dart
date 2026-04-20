@@ -24,6 +24,12 @@ class FirestoreDataSource<T> extends DataSource<T> {
   final bool Function(T record, String query)? searchMatcher;
   final BeforeWrite? beforeWrite;
 
+  /// Nama field di dokumen yang merujuk tenant (mis. `'lokasiId'`).
+  /// Kalau diisi dan [TenantScope] aktif (currentId != null & bukan admin
+  /// bypass), semua query otomatis di-scope `where(scopeField, = currentId)`
+  /// dan write otomatis diisi `scopeField: currentId`.
+  final String? scopeField;
+
   FirestoreDataSource({
     required this.collectionPath,
     required this.fromJson,
@@ -31,13 +37,24 @@ class FirestoreDataSource<T> extends DataSource<T> {
     required this.idOf,
     this.searchMatcher,
     this.beforeWrite,
+    this.scopeField,
   });
 
   CollectionReference<Map<String, dynamic>> get _col =>
       FirebaseFirestore.instance.collection(collectionPath);
 
   /// Hook override kalau subclass perlu tambah `where` clause default.
-  Query<Map<String, dynamic>> baseQuery() => _col;
+  /// Built-in: kalau [scopeField] diisi dan tenant aktif, auto `where`.
+  Query<Map<String, dynamic>> baseQuery() {
+    Query<Map<String, dynamic>> q = _col;
+    final tenantId = TenantScope.currentIdStatic;
+    if (scopeField != null &&
+        tenantId != null &&
+        !TenantScope.adminBypassStatic) {
+      q = q.where(scopeField!, isEqualTo: tenantId);
+    }
+    return q;
+  }
 
   @override
   Future<PaginatedResult<T>> list(ListQuery query) async {
@@ -96,9 +113,22 @@ class FirestoreDataSource<T> extends DataSource<T> {
     return fromJson({...doc.data()!, 'id': doc.id});
   }
 
+  /// Auto-isi `scopeField` kalau multi-tenant aktif & payload belum punya.
+  Map<String, dynamic> _applyTenantScope(Map<String, dynamic> data) {
+    final tenantId = TenantScope.currentIdStatic;
+    if (scopeField != null &&
+        tenantId != null &&
+        !TenantScope.adminBypassStatic &&
+        !data.containsKey(scopeField)) {
+      return {...data, scopeField!: tenantId};
+    }
+    return data;
+  }
+
   @override
   Future<T> create(Map<String, dynamic> data) async {
     var payload = Map<String, dynamic>.from(data)..remove('id');
+    payload = _applyTenantScope(payload);
     if (beforeWrite != null) payload = await beforeWrite!(payload);
     final ref = await _col.add(payload);
     return fromJson({...payload, 'id': ref.id});
@@ -107,6 +137,7 @@ class FirestoreDataSource<T> extends DataSource<T> {
   @override
   Future<T> update(String id, Map<String, dynamic> data) async {
     var payload = Map<String, dynamic>.from(data)..remove('id');
+    payload = _applyTenantScope(payload);
     if (beforeWrite != null) payload = await beforeWrite!(payload);
     await _col.doc(id).update(payload);
     final doc = await _col.doc(id).get();
