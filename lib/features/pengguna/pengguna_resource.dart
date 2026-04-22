@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_filament/flutter_filament.dart';
-import '../../data/models/pengguna.dart';
-import '../../data/services/firestore_data_source.dart';
-import '../lokasi/lokasi_resource.dart';
 
-final penggunaDataSource = FirestoreDataSource<Pengguna>(
-  collectionPath: 'users',
-  fromJson: Pengguna.fromJson,
-  toJson: (r) => r.toJson(),
-  idOf: (r) => r.id,
-);
+import '../../data/models/pengguna.dart';
+import '../../data/services/admin/admin_sdk.dart';
+import '../../data/services/admin/admin_user_service.dart';
+import '../../data/services/admin/service_account_storage.dart';
+import '../../globals/widgets/app_dialog.dart';
+import '../lokasi/lokasi_resource.dart';
+import 'pengguna_admin_data_source.dart';
+import 'widgets/reset_password_dialog.dart';
+import 'widgets/service_account_setup_dialog.dart';
+
+final penggunaDataSource = PenggunaAdminDataSource();
 
 class PenggunaResource extends Resource<Pengguna> {
   @override String get slug => 'pengguna';
@@ -41,6 +43,15 @@ class PenggunaResource extends Resource<Pengguna> {
             required: true,
             keyboardType: TextInputType.emailAddress,
           ),
+          if (ctx.isCreate)
+            TextInput(
+              name: 'password',
+              label: 'Password',
+              required: true,
+              obscure: true,
+              helperText: 'Minimal 6 karakter. Admin bisa reset nanti '
+                  'dari tombol "Reset Password" di list.',
+            ),
           Select<String>(
             name: 'role',
             label: 'Role',
@@ -64,8 +75,8 @@ class PenggunaResource extends Resource<Pengguna> {
           CheckboxList<String>(
             name: 'lokasiIds',
             label: 'Lokasi yang boleh diakses',
-            helperText:
-                'Admin global (role = Admin) otomatis bisa akses semua lokasi.',
+            helperText: 'Pilih satu atau lebih lokasi untuk user ini.',
+            visibleWhen: (s) => s.get<String>('role') != 'admin',
             options: [
               for (final l in lokasiCache.items)
                 CheckboxListOption(l.id, l.nama),
@@ -131,9 +142,67 @@ class PenggunaResource extends Resource<Pengguna> {
     rowActions: [
       RowAction.view<Pengguna>((ctx, row) async {}),
       RowAction.edit<Pengguna>((ctx, row) async {}),
-      RowAction.delete<Pengguna>((ctx, row) async {
-        await penggunaDataSource.delete(row.id);
-      }),
+      RowAction<Pengguna>(
+        name: 'reset_password',
+        label: 'Reset Password',
+        icon: Icons.lock_reset_outlined,
+        color: ActionColor.info,
+        onPressed: (ctx, row) => _resetPasswordFlow(row),
+      ),
+      RowAction.delete<Pengguna>((ctx, row) => _deleteFlow(row)),
     ],
   );
+}
+
+Future<void> _resetPasswordFlow(Pengguna row) async {
+  if (!await _ensureAdminSdkConfigured()) return;
+  final newPassword = await ResetPasswordDialog.show(row);
+  if (newPassword == null) return;
+  await AppDialog.loading(message: 'Mereset password...');
+  try {
+    await AdminUserService.resetPassword(
+      uid: row.id,
+      newPassword: newPassword,
+    );
+    AppDialog.close();
+    await AppDialog.basic(
+      title: 'Berhasil',
+      message: 'Password ${row.nama} sudah direset.',
+      positiveText: 'Tutup',
+    );
+  } catch (e) {
+    AppDialog.close();
+    await AppDialog.error(message: e.toString());
+  }
+}
+
+Future<void> _deleteFlow(Pengguna row) async {
+  if (!await _ensureAdminSdkConfigured()) return;
+  await AppDialog.loading(message: 'Menghapus user...');
+  try {
+    await penggunaDataSource.delete(row.id);
+    AppDialog.close();
+  } catch (e) {
+    AppDialog.close();
+    await AppDialog.error(message: e.toString());
+  }
+}
+
+/// Pastikan service account sudah di-upload. Kalau belum, tawarkan
+/// buka dialog setup. Return `true` kalau siap lanjut.
+Future<bool> _ensureAdminSdkConfigured() async {
+  if (await ServiceAccountStorage.isConfigured()) return true;
+  final confirm = await AppDialog.warning(
+    message: 'Service account Firebase Admin belum di-upload. '
+        'Upload sekarang?',
+    confirmText: 'Upload',
+    cancelText: 'Batal',
+  );
+  if (confirm != true) return false;
+  final saved = await ServiceAccountSetupDialog.show();
+  if (saved == true) {
+    AdminSdk.reset();
+    return true;
+  }
+  return false;
 }

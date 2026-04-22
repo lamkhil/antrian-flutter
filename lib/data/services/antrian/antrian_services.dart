@@ -2,9 +2,11 @@ import 'package:antrian/data/models/antrian.dart';
 import 'package:antrian/data/models/layanan.dart';
 import 'package:antrian/data/models/response_api.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class AntrianServices {
-  static final _db = FirebaseFirestore.instance;
+  @visibleForTesting
+  static FirebaseFirestore db = FirebaseFirestore.instance;
 
   /// Generate nomor antrian sekuensial per layanan per hari.
   /// Format: `<huruf_pertama_kode_layanan>-<3 digit>`, contoh "L-001".
@@ -14,7 +16,7 @@ class AntrianServices {
       final dari = DateTime(now.year, now.month, now.day);
       final sampai = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
-      final existing = await _db
+      final existing = await db
           .collection('antrians')
           .where('layananId', isEqualTo: layanan.id)
           .where('waktuDaftar', isGreaterThanOrEqualTo: Timestamp.fromDate(dari))
@@ -30,7 +32,7 @@ class AntrianServices {
           : 'X';
       final nomor = '$prefix-${seq.toString().padLeft(3, '0')}';
 
-      final id = _db.collection('antrians').doc().id;
+      final id = db.collection('antrians').doc().id;
       final antrian = Antrian(
         id: id,
         nomorAntrian: nomor,
@@ -45,7 +47,7 @@ class AntrianServices {
         lokasi: layanan.lokasi,
       );
 
-      await _db.collection('antrians').doc(id).set({
+      await db.collection('antrians').doc(id).set({
         ...antrian.toJson(),
         'waktuDaftar': Timestamp.fromDate(now),
       });
@@ -59,7 +61,7 @@ class AntrianServices {
   /// Stream antrian aktif (menunggu/dipanggil/dilayani) di satu zona.
   /// Dipakai oleh display layar zona.
   static Stream<List<Antrian>> streamAktifByZona(String zonaId) {
-    return _db
+    return db
         .collection('antrians')
         .where('zonaId', isEqualTo: zonaId)
         .where(

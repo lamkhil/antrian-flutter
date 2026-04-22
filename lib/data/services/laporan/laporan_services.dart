@@ -2,15 +2,19 @@ import 'package:antrian/data/models/antrian.dart';
 import 'package:antrian/data/models/lokasi.dart';
 import 'package:antrian/data/models/response_api.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class LaporanServices {
+  @visibleForTesting
+  static FirebaseFirestore db = FirebaseFirestore.instance;
+
   static Future<ResponseApi<List<Antrian>>> fetchAntrianRange({
     required DateTime dari,
     required DateTime sampai,
     Lokasi? lokasi,
   }) async {
     try {
-      Query query = FirebaseFirestore.instance
+      Query query = db
           .collection('antrians')
           .where(
             'waktuDaftar',

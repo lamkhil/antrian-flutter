@@ -1,41 +1,52 @@
 {
-    "flutter": {
-        "platforms": {
-            "android": {
-                "default": {
-                    "projectId": "serverless-queue",
-                    "appId": "1:1091908852133:android:0e31a6c7dffb076e12f04c",
-                    "fileOutput": "android/app/google-services.json"
-                }
-            },
-            "ios": {
-                "default": {
-                    "projectId": "serverless-queue",
-                    "appId": "1:1091908852133:ios:9aba8d38090adf0e12f04c",
-                    "uploadDebugSymbols": false,
-                    "fileOutput": "ios/Runner/GoogleService-Info.plist"
-                }
-            },
-            "macos": {
-                "default": {
-                    "projectId": "serverless-queue",
-                    "appId": "1:1091908852133:ios:9aba8d38090adf0e12f04c",
-                    "uploadDebugSymbols": false,
-                    "fileOutput": "macos/Runner/GoogleService-Info.plist"
-                }
-            },
-            "dart": {
-                "lib/firebase_options.dart": {
-                    "projectId": "serverless-queue",
-                    "configurations": {
-                        "android": "1:1091908852133:android:0e31a6c7dffb076e12f04c",
-                        "ios": "1:1091908852133:ios:9aba8d38090adf0e12f04c",
-                        "macos": "1:1091908852133:ios:9aba8d38090adf0e12f04c",
-                        "web": "1:1091908852133:web:3987f2ca0d1c9f0d12f04c",
-                        "windows": "1:1091908852133:web:06b1f6a81f98940212f04c"
-                    }
-                }
-            }
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "serverless-queue",
+          "appId": "1:1091908852133:android:0e31a6c7dffb076e12f04c",
+          "fileOutput": "android/app/google-services.json"
         }
+      },
+      "ios": {
+        "default": {
+          "projectId": "serverless-queue",
+          "appId": "1:1091908852133:ios:9aba8d38090adf0e12f04c",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "serverless-queue",
+          "appId": "1:1091908852133:ios:9aba8d38090adf0e12f04c",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "serverless-queue",
+          "configurations": {
+            "android": "1:1091908852133:android:0e31a6c7dffb076e12f04c",
+            "ios": "1:1091908852133:ios:9aba8d38090adf0e12f04c",
+            "macos": "1:1091908852133:ios:9aba8d38090adf0e12f04c",
+            "web": "1:1091908852133:web:3987f2ca0d1c9f0d12f04c",
+            "windows": "1:1091908852133:web:06b1f6a81f98940212f04c"
+          }
+        }
+      }
     }
+  },
+  "hosting": {
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "region": "asia-east1"
+    }
+  }
 }

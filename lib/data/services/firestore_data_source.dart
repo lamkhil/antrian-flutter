@@ -30,6 +30,8 @@ class FirestoreDataSource<T> extends DataSource<T> {
   /// dan write otomatis diisi `scopeField: currentId`.
   final String? scopeField;
 
+  final FirebaseFirestore? _firestoreOverride;
+
   FirestoreDataSource({
     required this.collectionPath,
     required this.fromJson,
@@ -38,10 +40,13 @@ class FirestoreDataSource<T> extends DataSource<T> {
     this.searchMatcher,
     this.beforeWrite,
     this.scopeField,
-  });
+    FirebaseFirestore? firestore,
+  }) : _firestoreOverride = firestore;
+
+  FirebaseFirestore get _fs => _firestoreOverride ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _col =>
-      FirebaseFirestore.instance.collection(collectionPath);
+      _fs.collection(collectionPath);
 
   /// Hook override kalau subclass perlu tambah `where` clause default.
   /// Built-in: kalau [scopeField] diisi dan tenant aktif, auto `where`.
