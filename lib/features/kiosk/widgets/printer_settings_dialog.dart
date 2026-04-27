@@ -95,12 +95,19 @@ class _PrinterSettingsDialogState extends State<PrinterSettingsDialog> {
     });
     final ok = await KioskPrinter.printTest(cfg);
     if (!mounted) return;
+    final isBrowser = cfg.transport == KioskPrinterTransport.browserPrint;
     setState(() {
       _busy = false;
       _statusOk = ok;
-      _status = ok
-          ? 'Berhasil cetak tes.'
-          : 'Gagal cetak tes — periksa printer dan koneksi.';
+      if (isBrowser) {
+        _status = ok
+            ? 'Dialog cetak telah dibuka — pilih printer di dialog browser.'
+            : 'Browser memblokir dialog cetak. Izinkan pop-up untuk situs ini.';
+      } else {
+        _status = ok
+            ? 'Berhasil cetak tes.'
+            : 'Gagal cetak tes — periksa printer dan koneksi.';
+      }
     });
   }
 

@@ -44,7 +44,7 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "**/packages/**"
+      "**/packages/win_ble/**"
     ],
     "rewrites": [
       {
