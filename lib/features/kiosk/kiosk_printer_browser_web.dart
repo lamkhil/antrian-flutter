@@ -4,14 +4,17 @@ import 'dart:async';
 import 'dart:html' as html;
 
 /// Cetak via dialog browser (`window.print()`). Render [content] ke iframe
-/// tersembunyi via `srcdoc` lalu trigger print di iframe-nya. Browser akan
-/// menampilkan dialog OS — user klik "Print" (kecuali Chrome/Edge dijalankan
-/// dengan flag `--kiosk --kiosk-printing` untuk auto-cetak ke default).
+/// tersembunyi pakai `document.open/write/close` (bukan `srcdoc` — Firefox
+/// memperlakukan iframe `srcdoc` sebagai null origin sehingga panggilan
+/// `contentWindow.print()` gagal silent). Setelah konten ditulis, iframe
+/// + contentWindow di-focus eksplisit lalu `print()` dipanggil di
+/// contentWindow. Browser akan menampilkan dialog OS — user klik "Print"
+/// (kecuali Chrome/Edge dijalankan dengan flag `--kiosk --kiosk-printing`
+/// untuk auto-cetak ke default).
 class KioskPrinterBrowser {
   static Future<bool> printHtml(String content) async {
     try {
       final iframe = html.IFrameElement()
-        ..srcdoc = content
         ..style.position = 'fixed'
         ..style.right = '0'
         ..style.bottom = '0'
@@ -19,29 +22,61 @@ class KioskPrinterBrowser {
         ..style.height = '0'
         ..style.border = '0';
 
-      final completer = Completer<bool>();
-      iframe.onLoad.first.then((_) async {
-        // Beri sedikit delay untuk pastikan style ter-apply sebelum print.
-        await Future<void>.delayed(const Duration(milliseconds: 80));
-        try {
-          final win = iframe.contentWindow as html.Window;
-          win.print();
-          if (!completer.isCompleted) completer.complete(true);
-        } catch (_) {
-          if (!completer.isCompleted) completer.complete(false);
-        }
-      });
-
       html.document.body!.append(iframe);
 
-      // Timeout kalau onLoad nggak pernah fire.
+      final win = iframe.contentWindow;
+      final doc = win?.document;
+      if (win == null || doc == null) {
+        iframe.remove();
+        return false;
+      }
+
+      // Tulis konten via document.open/write/close. Ini memberi iframe
+      // origin yang sama dengan parent, jadi contentWindow.print() boleh
+      // dipanggil tanpa SecurityError.
+      doc.open();
+      doc.write(content);
+      doc.close();
+
+      // Tunggu image (logo) selesai loading sebelum print, kalau ada.
+      // Pakai window.onload daripada DOMContentLoaded agar image juga
+      // terhitung.
+      final completer = Completer<bool>();
+      void firePrint() {
+        if (completer.isCompleted) return;
+        try {
+          // Firefox butuh focus di iframe + contentWindow sebelum print,
+          // kalau tidak dialog kadang muncul tapi konten kosong.
+          iframe.focus();
+          win.focus();
+          win.print();
+          completer.complete(true);
+        } catch (_) {
+          completer.complete(false);
+        }
+      }
+
+      // Jika dokumen sudah complete (no images), langsung print.
+      if (doc.readyState == 'complete') {
+        // Beri 1 frame supaya layout settle dulu.
+        Timer(const Duration(milliseconds: 50), firePrint);
+      } else {
+        win.onLoad.first.then((_) {
+          Timer(const Duration(milliseconds: 50), firePrint);
+        });
+        // Fallback timeout — tetap coba print setelah 3 detik kalau onLoad
+        // tidak pernah fire (misal logo gagal load).
+        Timer(const Duration(seconds: 3), firePrint);
+      }
+
+      // Hard timeout: kalau print() pun gagal.
       Timer(const Duration(seconds: 10), () {
         if (!completer.isCompleted) completer.complete(false);
       });
 
       final ok = await completer.future;
-      // Hapus iframe setelah print kemungkinan selesai. Kalau dihapus
-      // terlalu cepat, beberapa browser membatalkan render.
+      // Hapus iframe setelah dialog kemungkinan ditutup. Hapus terlalu
+      // cepat membatalkan render di sebagian browser.
       Timer(const Duration(seconds: 5), iframe.remove);
       return ok;
     } catch (_) {
