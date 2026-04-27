@@ -45,9 +45,8 @@ dependencies:
   intl: ^0.20.2
   shimmer: ^3.0.0
   equatable: ^2.0.8
-  firebase_admin_sdk: ^0.5.1
-  file_picker: ^8.1.4
-  flutter_secure_storage: ^9.2.2
+  flutter_tts: ^4.2.0
+  audioplayers: ^6.1.0
   flutter_filament:
     path: packages/flutter_filament
 
@@ -84,6 +83,7 @@ flutter:
   assets:
     - assets/
     - assets/images/
+    - assets/sounds/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

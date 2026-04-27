@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_admin_sdk/auth.dart' as admin_auth;
 
 import '../../models/pengguna.dart';
-import 'admin_sdk.dart';
+import 'admin_sdk_io.dart';
 
 /// CRUD user via Firebase Admin SDK + sinkronisasi dokumen
 /// `users/{uid}` di Firestore.

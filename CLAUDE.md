@@ -4,74 +4,158 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-`antrian` — a Flutter queue-management app (Dart SDK ^3.11.4). Uses Firebase (Auth, Firestore), Riverpod (with codegen), go_router, and Dio. UI/domain text is in Indonesian (e.g. `antrian`=queue, `loket`=counter, `layanan`=service, `zona`=zone, `pengguna`=user, `laporan`=report, `pengaturan`=settings).
+`antrian` — a Flutter queue-management app (Dart SDK ^3.11.4) built on a local FilamentPHP-inspired admin framework (`packages/flutter_filament`, **NOT** the 3D rendering library of the same name on pub.dev). Stack: Firebase (Auth + Firestore), Riverpod (plain providers, **no codegen**), go_router, flutter_tts, audioplayers.
 
-Domain hierarchy: **Lokasi → Zona → Layanan → Loket → Antrian**. Each level has a Firestore collection (`locations`, `zones`, `services`, `counters`, `antrians`) and a corresponding model that nests its parent (e.g. `Loket` carries `layanan`, `zona`, `lokasi` references).
+**Conventions:** code identifiers (variables, functions, files) in English; UI/menu text and Firestore-domain prose in Indonesian (`loket`=counter, `layanan`=service, `zona`=zone, `pengguna`=user, `kios`=kiosk, `antrian`=ticket/queue).
+
+**Domain hierarchy:** `Zone → Service → Counter → User`, plus standalone `Kiosk` (no zone link). Lokasi (location) was intentionally dropped on 2026-04-27 during a full rebuild; the prior implementation lives in `lib-backup/` for reference only — **do not import from it**.
+
+**Constraints:**
+- A `Service` belongs to exactly one `Zone`.
+- A `Counter` handles many Services (many-to-many via `Counter.serviceIds: List<String>`).
+- A `User` belongs to one `Counter` (counter user picks at login → persisted to `users/<uid>.counterId`).
+- A `Kiosk` has `name + deviceId + active`; the kiosk client device stores its own deviceId in SharedPreferences on first launch.
 
 ## Commands
 
 ```bash
-flutter pub get                              # install deps
-flutter run                                  # run app
-flutter test                                 # run all tests
-flutter test test/widget_test.dart           # run a single test file
-flutter analyze                              # lint (uses flutter_lints via analysis_options.yaml)
-
-# Code generation (Riverpod + router providers — required after editing any @riverpod annotated file)
-dart run build_runner build --delete-conflicting-outputs
-dart run build_runner watch  --delete-conflicting-outputs
-
-# Scaffold a new feature (uses local Mason brick at ./feature)
-mason make feature --name <feature_name>
+flutter pub get
+flutter run
+flutter analyze
+flutter test
+flutter build apk --debug --target-platform android-arm64   # quickest end-to-end compile check
 ```
 
-After generating a feature with Mason, wire it into `lib/core/router/routes_registry.dart` by adding the import under the `/// mason:imports` marker and the `GoRoute` under `/// mason:routes`.
+No code generation is used in `lib/` — plain Riverpod `Provider`/`ChangeNotifier`. The `mason.yaml` brick (`./feature`) belongs to the old `lib-backup/` structure and is **not** used for new features.
 
 ## Architecture
 
-### Entry point and bootstrap
-`lib/main.dart` initializes `SharedPreferences`, Firebase (via `lib/firebase_options.dart`), and `intl` `id_ID` locale data before `runApp`. The `sharedPreferencesProvider` is overridden at the `ProviderScope` so downstream providers can read it synchronously. `MyApp` is a `ConsumerWidget` that mounts `MaterialApp.router` with the router from `appRouterProvider`.
+### Entry point
+`lib/main.dart` initializes Firebase, `intl` `id_ID` data, and primes `LookupCache.instance` (one-shot fetch + Firestore `snapshots()` subscription on `zones`/`services`/`counters` so flutter_filament's synchronous `Select.options` can read fresh data without async hops). Then `runApp(ProviderScope(...))` mounting `MaterialApp.router` with `appRouterProvider`.
 
-### Routing & auth gate
-- `lib/core/router/app_router.dart` exposes `appRouterProvider` (keepAlive) which builds a `GoRouter`.
-- Auth gating lives in the router's `redirect`: if `FirebaseAuth.instance.currentUser == null`, every non-`/login` route is redirected to `/login`; authenticated users visiting `/login` are bounced to `/`. Exception: `/kiosk` and `/display/*` are public (unattended kiosk + zone display screens), bypassing the auth redirect — do not gate them behind login.
-- `RouterRefreshNotifier` (passed as `refreshListenable`) makes the router reactive to auth state changes.
-- `routes_registry.dart` is the single flat list of `GoRoute`s (`appRoutes`). Each feature owns a `*_route.dart` that exports its `GoRoute`; new routes are registered here.
-- `lib/globals/app_navigator.dart` holds the global `navigatorKey` used by `GoRouter` so non-widget code can navigate.
+### Routing & auth gate (`lib/app/router.dart`)
+`appRouterProvider` builds a single GoRouter; auth gating is in `redirect`. Driven by `AppAuthState` (`lib/data/app_auth_state.dart`) — a `ChangeNotifier` combining Firebase Auth state with the user's Firestore profile doc; passed as `refreshListenable`.
 
-### Feature layout (per-feature, enforced by the Mason brick)
+**Public routes (bypass auth):** `/login`, `/kiosk*`, `/display*`.
+
+**Role-based redirects (logged in):**
+- `admin` → `/admin/*` (flutter_filament panel); blocked from `/counter*`.
+- `counter` with `counterId` set → `/counter`.
+- `counter` without `counterId` → `/counter/select`.
+
+Special routes: `/loading` (user-doc still loading), `/no-profile` (auth user has no Firestore profile).
+
+### Admin panel (`lib/features/admin/`)
+Built on flutter_filament. `admin_panel.dart` exports the singleton `Panel` (`adminPanel`) with brand, theme (`FilamentColors.indigo`), sidebar footer (current user + logout), and the resources list. The router includes `...adminPanel.buildRoutes()` → routes mounted at `/admin/<slug>/...` with auto-built sidebar grouped by `navigationGroup`.
+
+**Per-resource layout (Filament-style):**
 ```
-lib/features/<name>/
-  <name>_route.dart              # GoRoute definition
-  application/<name>_controller.dart   # @riverpod controller (generates .g.dart)
-  presentation/<name>_page.dart        # UI
+lib/features/admin/resources/<entity>/
+  <entity>_resource.dart           # Resource<T> subclass: form, table, pages(), relations()
+  pages/
+    list_<plural>.dart             # ListXxx → ListRecordsPage<T>
+    create_<singular>.dart         # CreateXxx → CreateRecordPage<T>
+    view_<singular>.dart           # ViewXxx → ViewRecordPage<T>
+    edit_<singular>.dart           # EditXxx → EditRecordPage<T>
+  relations/                       # optional
+    <child>_relation_manager.dart  # RelationManager<TParent, TChild>
 ```
-Existing features: `antrian`, `home`, `laporan`, `layanan`, `login`, `loket`, `pengaturan`, `pengguna`, `zona`. `zona` and `layanan` each have a detail route (`/zona/:id`, `/layanan/:id`) where their child entity (Layanan/Loket) is CRUD-ed in context. The layanan list page also links out to `/layanan/:id` via a "view" action on each row.
 
-Two **standalone screens** live outside the sidebar menu and are rendered as bare `Scaffold` (no `AppLayout`):
-- `kiosk` at `/kiosk` — public self-service ticket dispenser. Flow: pick lokasi → pick layanan → `AntrianServices.ambilTiket` writes a new `antrians` doc and returns a ticket; auto-returns to the layanan list after 10s.
-- `display` at `/display/:zonaId` — unattended zone screen. Subscribes to `AntrianServices.streamAktifByZona` (Firestore `snapshots()`) and shows per-loket "now serving" plus a waiting-queue list, updating live. Loket list is fetched once on entry (services→loket fan-out).
+Five resources today: `user/`, `counter/`, `service/`, `zone/`, `kiosk/`. Two relation managers (rendered as tabs on edit/view): `counter/relations/users_relation_manager.dart` (users assigned to this loket), `zone/relations/services_relation_manager.dart` (services in this zone).
 
-### Data layer
-- `lib/data/models/` — plain Dart model classes. `Zona`, `Lokasi`, `Layanan`, `Antrian` all extend `Equatable` with `props: [id]` (identity-by-id). Models hold no fixture/dummy data — that lives in services.
-- `lib/data/services/` — static-method service classes grouped by domain (`auth/`, `lokasi/`, `zona/`, `layanan/`, `loket/`, `pengguna/`, `laporan/`, `notifikasi/`). Methods return `ResponseApi<T>`. Naming convention: `fetch*` / `add` / `update` / `delete` (e.g. `LayananServices.add`, `ZonaServices.updateZona`). One service per domain entity — do not put child-entity methods on the parent service. `NotifikasiServices.fetchDummy()` returns hardcoded placeholder data pending a real backend. `LaporanServices.fetchAntrianRange` pulls raw antrian; aggregation lives in `LaporanState` getters (counts, avg wait, group-by-zona/layanan).
+Each page widget exposes a static `route()` returning a `ResourcePage<T>` (mirrors Filament's `ListUsers::route('/')`). Resources override `pages()` explicitly:
 
-### Shared infrastructure
-- `lib/core/storage/shared_preferences.dart` — declares `sharedPreferencesProvider` (overridden in `main.dart`).
-- `lib/globals/providers/` — cross-feature Riverpod providers (currently `lokasi/lokasi_provider.dart` for the active location).
-- `lib/globals/widgets/` — reusable UI primitives. Prefer these over re-inlining:
-  - `AppLayout` (scaffold with sidebar + topbar), `AppTopBar`, `AppSidebar`, `AppDialog` (static loading/error/warning/basic).
-  - `StatusBadge` — takes `label/bg/fg/dot`; status enums expose matching getters (`.label`, `.badgeBg`, `.badgeColor`, `.dotColor`).
-  - `AppActionButton` — edit/delete icon button; `size`/`iconSize` override (default 28/13; zona_detail uses 26/12).
-  - `AppEmptyState`, `AppMobileField`, `AppListToolbar` (search + add button), `AppFormField` (auto-switches to multiline when `maxLines > 1`), `AppDropdownField<T>`.
-- `lib/extension/size.dart` — sizing extension helpers.
+```dart
+@override
+Map<String, ResourcePage<AppUser>> pages() => {
+  'index':  ListUsers.route(),
+  'create': CreateUser.route(),
+  'view':   ViewUser.route(),
+  'edit':   EditUser.route(),
+};
+```
 
-### State management conventions
-- Riverpod with code generation (`@riverpod` / `@Riverpod(keepAlive: true)`); every annotated file has a sibling `*.g.dart` that must be regenerated via `build_runner` after edits.
-- The go_router provider is also codegen'd (`app_router.g.dart`).
+**Adding a new resource:** create the entity folder, write the resource + 4 page widgets (+ optional relations), then register the resource instance in `admin_panel.dart`'s `resources: [...]`. Routes and sidebar entries are auto-derived.
 
-### Mason brick
-The `feature` brick lives in `./feature` and is registered in `mason.yaml`. The `mason-lock.json` currently pins the brick to an absolute macOS path (`/Users/mbam1/...`) — if `mason make` fails on this machine, re-run `mason get` or edit the lockfile to match `./feature`.
+### Counter operator UI (`lib/features/counter/`)
+**Not** a flutter_filament panel — custom `Scaffold` per page since the operator screen is action-driven, not CRUD.
 
-### Firebase
-Configured for multiple platforms via FlutterFire (`firebase_options.dart`, `firebase.json`, `firebase.indexes.json`). Auth state drives routing; Firestore indexes are tracked in `firebase.indexes.json`.
+- `counter_select_page.dart` — pick a Loket, write `users/<uid>.counterId`. Router redirects here when a counter user has no counterId.
+- `counter_page.dart` — main operator screen. Header (loket + user + paused badge), current ticket card with **Selesai (Serve) / Panggil Ulang / Skip / Transfer**, big **Panggil Antrian Berikutnya** button (disabled when there's an active called ticket or user is paused), **Istirahat / Lanjutkan** toggle (writes `users/<uid>.paused`), waiting list. The "+ Tiket Tes" header button is a stand-in for the kiosk client and **should be removed once the kiosk is in real use**.
+- `counter_profile_page.dart` — name, change password (re-auth + `updatePassword`), change loket.
+
+### Kiosk client (`lib/features/kiosk/`) — public
+- `/kiosk/setup` — first-launch input for Device ID; `KioskSession.resolve()` validates against `kiosks` Firestore (`active == true`); on success persisted to SharedPreferences (`kiosk_device_id`).
+- `/kiosk` — bootstraps from SharedPreferences (re-validates against Firestore on every cold start; if Kiosk record gone or deactivated, redirects to `/setup`). Service grid; tap → `TicketService.createTicket(serviceId)` → fullscreen success with the ticket number XL + 12s auto-return.
+
+### Public display (`lib/features/display/`) — public
+- `/display` — all-counter live board.
+- `/display/zone/:id` — same board scoped to one zone (counters/tickets/waiting filtered by `service.zoneId == :id`).
+
+Streams `tickets` for today (`createdAt >= startOfDay`); groups by counter for "now serving"; per-service waiting count in the footer bar; on each new `called` (or `recallCount` increment for that ticket) fires `audioplayers` chime (`assets/sounds/chime.wav`, ~1s ding-dong) followed by `flutter_tts` Indonesian announcement (`id-ID`), plus a 4-second amber-glow border highlight on the affected counter card. Live clock in header. All audio/TTS calls are wrapped in try/catch — if the audio backend is missing (emulator without audio, web), UI still works.
+
+### Data layer (`lib/data/`)
+- `firestore_data_source.dart` — `FirestoreDataSource<T>` implements flutter_filament's `DataSource<T>`. Fields: `whereEquals: Map<String, dynamic>?` (Firestore-side equality filter for relation scoping), `searchMatcher`, `createOverride` (e.g. user creation hook), `deleteHook`. List queries are one-shot then client-side filtered/sorted/paginated (fine for small admin collections).
+- `lookup_cache.dart` — singleton primed in `main()`, exposes sync `zones` / `services` / `counters` lists used by form `Select` options and table cell formatters. Helpers: `zoneName(id)`, `serviceName(id)`, `counterName(id)`.
+- `admin_user_service.dart` — uses a **secondary Firebase app** (`'admin_user_creator'`) to create Firebase Auth users without clobbering the admin's session. Auth-account deletion is **not possible** client-side (would need server Admin SDK); we delete only the Firestore profile. Reversed earlier `firebase_admin_sdk` decision.
+- `app_auth_state.dart` — `ChangeNotifier` for the router (auth state + user-doc stream).
+- `kiosk_session.dart` — SharedPreferences-backed device-id for kiosk app + `resolve()` lookup against `kiosks`.
+- `ticket_service.dart` — operations on `tickets`:
+  - `createTicket(serviceId)` — atomic per-service-per-day numbering via Firestore transaction on `services/<id>/dailyCounters/<YYYY-MM-DD>.next`. Number format: `<service.code or first-letter-uppercase>-<NNN>` (e.g. `A-007`). Counter doc per date → automatic daily reset.
+  - `callNext({counterId, serviceIds})` — picks oldest waiting ticket among the counter's services; transaction-guarded (re-checks `status == waiting` before claiming, so two counters can't grab the same ticket).
+  - `skip(ticketId)` — back to `waiting`, `counterId = null`, `queuedAt = serverTimestamp()`, `skipCount++` → automatically goes to end of queue (queue is sorted by `queuedAt`).
+  - `serve(ticketId, customerName?, customerPhone?, notes?)` — `status = done`, `doneAt = now`.
+  - `recall(ticketId)` — only bumps `recallCount` (no state change); display picks up the bump and re-fires chime/TTS.
+  - `transfer({ticketId, targetCounterId})` — `counterId = target`, stays `called`.
+- `streamTodayTickets({counterId, serviceIds})` (in `TicketService`) — live stream used by counter operator screen; sorts called-by-this-counter first, then waiting by `queuedAt`.
+
+### Models (`lib/models/`) — English class names
+`AppUser` (`UserRole` enum: `admin` / `counter`; `counterId`; `paused`), `Zone`, `Service` (`zoneId`, `code`), `Counter` (`serviceIds`), `Kiosk` (`deviceId`, `active`), `Ticket` (`TicketStatus`: `waiting` / `called` / `done`; `sequenceNumber: int` + `number: String` like `"A-007"`; `queuedAt` for ordering after skip; `skipCount`, `recallCount`, optional `customerName` / `customerPhone` / `notes`).
+
+All extend `Equatable` with `props: [id]` (identity-by-id). Each has `toMap()` / `fromMap(map)` for Firestore round-trip with Timestamp ↔ DateTime conversion via local helpers.
+
+### Firestore collections
+- `users` — keyed by Firebase Auth uid; `{name, email, role, counterId?, paused, createdAt}`
+- `zones` — `{name, description?, createdAt}`
+- `services` — `{name, zoneId, code?, createdAt}`
+- `services/<id>/dailyCounters/<YYYY-MM-DD>` — `{next: int, updatedAt}` (per-service daily ticket counter)
+- `counters` — `{name, serviceIds: List<String>, createdAt}`
+- `kiosks` — `{name, deviceId, active, createdAt}`
+- `tickets` — see Ticket model
+
+**Composite index needed** on `tickets`: `status` + `serviceId` + `createdAt` + `queuedAt`. Firestore prints the create-URL on first failed query — click and create.
+
+## Bootstrap (first run on a new environment)
+
+1. `flutter pub get`
+2. Verify `lib/firebase_options.dart` matches the target FlutterFire project; if not, `flutterfire configure`.
+3. **Create the first admin manually** (no UI to bootstrap):
+   - Firebase Auth: create user with email + password
+   - Firestore: write `users/<uid>` with `{ name: "Admin", email: "...", role: "admin" }`
+4. `flutter run` (Android target preferred for full audio/TTS; web works but limited audio backends).
+5. Login → `/admin`. Create base data via the panel: Zona → Layanan → Loket → Kios → counter Pengguna.
+
+## Manual end-to-end smoke test
+
+1. Login as admin → buat: **Zona** "Lobi" → **Layanan** "Pendaftaran" (code `A`, zona Lobi) → **Loket** "Loket 1" (centang Pendaftaran) → **Pengguna** `counter@x` role=Loket → **Kios** "Lobi-1" (Device ID `LOBI-01`).
+2. New tab `/kiosk` → input `LOBI-01` → tap **Pendaftaran** → tiket `A-001` keluar.
+3. New tab `/display` (atau `/display/zone/<lobi-id>` untuk filter zona).
+4. New tab `/login` → `counter@x` → pilih Loket 1 → `/counter` → **Panggil Antrian Berikutnya**. Display akan flash + chime + TTS: *"Nomor antrian A 001, silakan menuju Loket 1."*.
+
+## Local framework: `packages/flutter_filament`
+
+Filament 5-inspired admin framework. Edit freely; **bump `version` in its `pubspec.yaml` and add a CHANGELOG entry** when changing public API. Current `0.2.1` highlights:
+- `Resource<T>.pages()` returns `Map<String, ResourcePage<T>>` (key = page name, e.g. `'index'`, `'create'`).
+- `Resource<T>.relations()` returns `List<RelationManager>`; rendered as tabs on edit/view via `RelationTabs` widget.
+- `ResourcePage.list/create/view/edit` factories take optional `builder` so users can wrap default pages with custom widgets while preserving page-kind semantics (used for header-action derivation).
+- `RelationManager<TParent, TChild>` — manajer relasi ala Filament; expose `title`, `icon`, `table(parent)`, `dataSource(parent)`, `childId(record)`.
+- See `packages/flutter_filament/CHANGELOG.md` for the full migration history (incl. the breaking 0.1.x → 0.2.0 jump).
+
+## What's intentionally NOT built (current state, 2026-04-27)
+
+- Cetak fisik tiket di kiosk (tampil di layar saja, belum integrasi printer ESC/POS)
+- Server-side Auth account deletion (admin can only delete Firestore profile)
+- Display per-counter (`/display/counter/:id`) — easy to add by mirroring zone filter
+- Custom hooks on per-resource pages (header actions tambahan, tab kustom) — extension points exist (override `build()` di page widget), tinggal pakai
+- Seed script untuk bootstrap data awal — masih manual via admin panel
+- Audio chime customization UI (kalau mau, ganti `assets/sounds/chime.wav` dan rebuild)

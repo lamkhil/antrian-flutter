@@ -1,14 +1,13 @@
 import 'package:firebase_admin_sdk/auth.dart' as admin_auth;
 import 'package:firebase_admin_sdk/firebase_admin_sdk.dart' as admin;
-import 'package:flutter/foundation.dart';
 
+import 'admin_sdk_exceptions.dart';
 import 'service_account_storage.dart';
 
 /// Lazy singleton untuk Firebase Admin SDK.
 ///
-/// - Web tidak didukung (package butuh `dart:io` untuk JWT signing).
-/// - Kalau service account belum di-upload → [ensureReady] lempar
-///   [AdminSdkNotConfigured] supaya UI bisa arahkan admin ke setup screen.
+/// Kalau service account belum di-upload → [ensureReady] lempar
+/// [AdminSdkNotConfigured] supaya UI bisa arahkan admin ke setup screen.
 class AdminSdk {
   AdminSdk._();
 
@@ -16,7 +15,7 @@ class AdminSdk {
   static admin_auth.Auth? _auth;
   static String? _projectId;
 
-  static bool get isSupportedPlatform => !kIsWeb;
+  static bool get isSupportedPlatform => true;
 
   static bool get isReady => _app != null;
 
@@ -25,11 +24,6 @@ class AdminSdk {
   /// Bikin app baru kalau belum ada, return auth instance.
   /// Throw [AdminSdkNotConfigured] kalau JSON belum di-upload.
   static Future<admin_auth.Auth> ensureReady() async {
-    if (!isSupportedPlatform) {
-      throw const AdminSdkNotConfigured(
-        'Admin SDK tidak didukung di Web. Buka halaman ini dari aplikasi desktop atau mobile.',
-      );
-    }
     if (_auth != null) return _auth!;
 
     final data = await ServiceAccountStorage.readJson();
@@ -69,18 +63,4 @@ class AdminSdk {
     _auth = null;
     _projectId = null;
   }
-}
-
-class AdminSdkNotConfigured implements Exception {
-  final String message;
-  const AdminSdkNotConfigured(this.message);
-  @override
-  String toString() => message;
-}
-
-class AdminSdkInitFailed implements Exception {
-  final String message;
-  const AdminSdkInitFailed(this.message);
-  @override
-  String toString() => message;
 }
