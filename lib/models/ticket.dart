@@ -4,12 +4,14 @@ import 'package:equatable/equatable.dart';
 enum TicketStatus {
   waiting,
   called,
-  done;
+  done,
+  cancelled;
 
   String get label => switch (this) {
         TicketStatus.waiting => 'Menunggu',
         TicketStatus.called => 'Dipanggil',
         TicketStatus.done => 'Selesai',
+        TicketStatus.cancelled => 'Dibuang',
       };
 
   static TicketStatus fromName(String? name) =>

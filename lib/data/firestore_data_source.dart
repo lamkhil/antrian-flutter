@@ -25,6 +25,11 @@ class FirestoreDataSource<T> extends DataSource<T> {
   /// Used by relation managers to scope results (e.g. `{'counterId': 'abc'}`).
   final Map<String, dynamic>? whereEquals;
 
+  /// Always-on `arrayContains` filters (e.g. `{'serviceIds': '<id>'}` →
+  /// `where('serviceIds', arrayContains: '<id>')`). Dipakai untuk relation
+  /// many-to-many di mana child me-list ids di array.
+  final Map<String, dynamic>? whereArrayContains;
+
   FirestoreDataSource({
     required this.collection,
     required this.fromMap,
@@ -34,6 +39,7 @@ class FirestoreDataSource<T> extends DataSource<T> {
     this.createOverride,
     this.deleteHook,
     this.whereEquals,
+    this.whereArrayContains,
   });
 
   Query<Map<String, dynamic>> get _baseQuery {
@@ -41,6 +47,11 @@ class FirestoreDataSource<T> extends DataSource<T> {
     if (whereEquals != null) {
       whereEquals!.forEach((field, value) {
         q = q.where(field, isEqualTo: value);
+      });
+    }
+    if (whereArrayContains != null) {
+      whereArrayContains!.forEach((field, value) {
+        q = q.where(field, arrayContains: value);
       });
     }
     return q;
@@ -103,13 +114,19 @@ class FirestoreDataSource<T> extends DataSource<T> {
 
   @override
   Future<T> create(Map<String, dynamic> data) async {
-    if (createOverride != null) return createOverride!(data);
-    final clean = Map<String, dynamic>.from(data)
-      ..remove('id')
-      ..['createdAt'] = FieldValue.serverTimestamp();
-    final ref = await collection.add(clean);
-    final snap = await ref.get();
-    return fromMap(_readSnap(snap));
+    final T record;
+    if (createOverride != null) {
+      record = await createOverride!(data);
+    } else {
+      final clean = Map<String, dynamic>.from(data)
+        ..remove('id')
+        ..['createdAt'] = FieldValue.serverTimestamp();
+      final ref = await collection.add(clean);
+      final snap = await ref.get();
+      record = fromMap(_readSnap(snap));
+    }
+    notifyChanged();
+    return record;
   }
 
   @override
@@ -117,13 +134,16 @@ class FirestoreDataSource<T> extends DataSource<T> {
     final clean = Map<String, dynamic>.from(data)..remove('id');
     await collection.doc(id).set(clean, SetOptions(merge: true));
     final snap = await collection.doc(id).get();
-    return fromMap(_readSnap(snap));
+    final record = fromMap(_readSnap(snap));
+    notifyChanged();
+    return record;
   }
 
   @override
   Future<void> delete(String id) async {
     await collection.doc(id).delete();
     if (deleteHook != null) await deleteHook!(id);
+    notifyChanged();
   }
 
   @override

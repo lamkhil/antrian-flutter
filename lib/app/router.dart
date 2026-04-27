@@ -39,15 +39,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       final inAdmin = loc.startsWith('/admin');
       final inCounter = loc.startsWith('/counter');
+      final atTransient = atLogin || loc == '/loading' || loc == '/no-profile';
 
       switch (user.role) {
         case UserRole.admin:
-          if (atLogin || inCounter) return '/admin';
+          if (atTransient || inCounter) return '/admin';
           return null;
         case UserRole.counter:
           final hasCounter =
               user.counterId != null && user.counterId!.isNotEmpty;
-          if (atLogin || inAdmin) {
+          if (atTransient || inAdmin) {
             return hasCounter ? '/counter' : '/counter/select';
           }
           if (loc == '/counter' && !hasCounter) return '/counter/select';

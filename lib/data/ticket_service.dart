@@ -97,7 +97,10 @@ class TicketService {
       final list = snap.docs
           .map((d) => Ticket.fromMap({...d.data(), 'id': d.id}))
           .where((t) {
-        if (t.status == TicketStatus.done) return false;
+        if (t.status == TicketStatus.done ||
+            t.status == TicketStatus.cancelled) {
+          return false;
+        }
         if (t.status == TicketStatus.called) return t.counterId == counterId;
         return true;
       }).toList();
@@ -109,6 +112,38 @@ class TicketService {
         final aQ = a.queuedAt ?? a.createdAt ?? DateTime(2000);
         final bQ = b.queuedAt ?? b.createdAt ?? DateTime(2000);
         return aQ.compareTo(bQ);
+      });
+      return list;
+    });
+  }
+
+  /// Live stream of tickets with status `done` / `cancelled` pada tanggal
+  /// [date], terbatas ke [serviceIds] yang ditangani loket. Sort: paling
+  /// baru selesai/dibuang di atas. Dipakai tab "Riwayat" di counter page.
+  Stream<List<Ticket>> streamHistory({
+    required List<String> serviceIds,
+    required DateTime date,
+  }) {
+    if (serviceIds.isEmpty) return Stream.value(const []);
+    final start = DateTime(date.year, date.month, date.day);
+    final end = start.add(const Duration(days: 1));
+    return _tickets
+        .where('serviceId', whereIn: serviceIds.take(30).toList())
+        .where('doneAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('doneAt', isLessThan: Timestamp.fromDate(end))
+        .snapshots()
+        .map((snap) {
+      final list = snap.docs
+          .map((d) => Ticket.fromMap({...d.data(), 'id': d.id}))
+          .where((t) =>
+              t.status == TicketStatus.done ||
+              t.status == TicketStatus.cancelled)
+          .toList();
+      list.sort((a, b) {
+        final aD = a.doneAt ?? a.createdAt ?? DateTime(2000);
+        final bD = b.doneAt ?? b.createdAt ?? DateTime(2000);
+        return bD.compareTo(aD);
       });
       return list;
     });
@@ -162,6 +197,19 @@ class TicketService {
       'calledAt': null,
       'queuedAt': FieldValue.serverTimestamp(),
       'skipCount': FieldValue.increment(1),
+    });
+  }
+
+  /// Buang tiket — tidak dihapus, hanya tidak bisa dipanggil ulang.
+  /// Status dipindah ke [TicketStatus.cancelled] supaya tetap ke-record
+  /// di Firestore (untuk reporting / audit) tapi otomatis hilang dari
+  /// stream operator dan display.
+  Future<void> cancel(String ticketId) async {
+    await _tickets.doc(ticketId).update({
+      'status': TicketStatus.cancelled.name,
+      'counterId': null,
+      'calledAt': null,
+      'doneAt': FieldValue.serverTimestamp(),
     });
   }
 

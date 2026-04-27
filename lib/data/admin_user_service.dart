@@ -38,6 +38,7 @@ class AdminUserService {
     required String password,
     required String name,
     required UserRole role,
+    String? counterId,
   }) async {
     final app = await _secondaryApp();
     final auth = FirebaseAuth.instanceFor(app: app);
@@ -51,6 +52,7 @@ class AdminUserService {
       email: email.trim(),
       name: name.trim(),
       role: role,
+      counterId: counterId,
     );
     await _users.doc(uid).set({
       ...user.toMap(),

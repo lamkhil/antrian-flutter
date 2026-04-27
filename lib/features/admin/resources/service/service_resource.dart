@@ -9,6 +9,7 @@ import 'pages/create_service.dart';
 import 'pages/edit_service.dart';
 import 'pages/list_services.dart';
 import 'pages/view_service.dart';
+import 'relations/counters_relation_manager.dart';
 
 final serviceDataSource = FirestoreDataSource<Service>(
   collection: FirebaseFirestore.instance.collection('services'),
@@ -73,6 +74,11 @@ class ServiceResource extends Resource<Service> {
         'view': ViewService.route(),
         'edit': EditService.route(),
       };
+
+  @override
+  List<RelationManager> relations() => [
+        ServiceCountersRelationManager(),
+      ];
 
   @override
   TableSchema<Service> table() => TableSchema<Service>(
