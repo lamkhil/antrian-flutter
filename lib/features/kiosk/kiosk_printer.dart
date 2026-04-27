@@ -14,7 +14,8 @@ import '../../models/service.dart';
 import '../../models/ticket.dart';
 import 'kiosk_printer_browser.dart'
     if (dart.library.html) 'kiosk_printer_browser_web.dart';
-import 'kiosk_printer_os.dart';
+import 'kiosk_printer_os.dart'
+    if (dart.library.io) 'kiosk_printer_os_io.dart';
 
 /// Cara menyalurkan tiket ke printer.
 enum KioskPrinterTransport {
