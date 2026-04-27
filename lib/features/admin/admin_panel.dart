@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_filament/flutter_filament.dart';
 import 'package:go_router/go_router.dart';
 
+import 'resources/ai_voice/ai_voice_resource.dart';
 import 'resources/counter/counter_resource.dart';
 import 'resources/kiosk/kiosk_resource.dart';
 import 'resources/service/service_resource.dart';
@@ -20,6 +21,7 @@ final adminPanel = Panel(
     ServiceResource(),
     ZoneResource(),
     KioskResource(),
+    AiVoiceResource(),
   ],
   sidebarFooter: const _AdminSidebarFooter(),
 );

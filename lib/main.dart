@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/router.dart';
+import 'data/ai_voice_settings_service.dart';
 import 'data/lookup_cache.dart';
 import 'features/admin/admin_panel.dart';
 import 'firebase_options.dart';
@@ -13,6 +14,7 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('id_ID', null);
   await LookupCache.instance.init();
+  await AiVoiceSettingsService.instance.ensureExists();
   runApp(const ProviderScope(child: AntrianApp()));
 }
 

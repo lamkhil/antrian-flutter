@@ -43,10 +43,17 @@ dependencies:
   firebase_auth: ^6.3.0
   cloud_firestore: ^6.2.0
   intl: ^0.20.2
+  image_picker: ^1.1.2
+  path_provider: ^2.1.5
+  print_bluetooth_thermal: ^1.1.0
+  esc_pos_utils_plus: ^2.0.4
+  ffi: ^2.1.0
+  image: ^4.0.0
   shimmer: ^3.0.0
   equatable: ^2.0.8
   flutter_tts: ^4.2.0
   audioplayers: ^6.1.0
+  speech_to_text: ^7.0.0
   flutter_filament:
     path: packages/flutter_filament
 
